@@ -1,0 +1,1 @@
+3D model sourced from: https://grabcad.com/library/wio-sx1262-wireless-module-1

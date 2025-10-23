@@ -1,0 +1,22 @@
+EESchema-LIBRARY Version 2.4
+#encoding utf-8
+#
+# Simple_Addon_v2
+#
+DEF Simple_Addon_v2 X 0 40 Y Y 1 F N
+F0 "X" 0 0 50 H V C CNN
+F1 "Simple_Addon_v2" 0 800 50 H V C CNN
+F2 "" 0 200 50 H I C CNN
+F3 "" 0 200 50 H I C CNN
+DRAW
+S -300 350 300 -350 0 1 0 N
+X VCC 1 -200 550 200 D 50 50 1 1 I
+X GND 2 -200 -550 200 U 50 50 1 1 I
+X SDA 3 0 550 200 D 50 50 1 1 I
+X SCL 4 0 -550 200 U 50 50 1 1 I
+X GPIO1 5 200 550 200 D 50 50 1 1 I
+X GPIO2 6 200 -550 200 U 50 50 1 1 I
+ENDDRAW
+ENDDEF
+#
+#End Library

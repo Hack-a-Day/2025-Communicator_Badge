@@ -1,0 +1,13 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "Wio1262")(type "KiCad")(uri "${KIPRJMOD}/Wio1262/Wio1262.pretty")(options "")(descr ""))
+  (lib (name "Simple_Addon_v2")(type "KiCad")(uri "${KIPRJMOD}/SAOv2/Simple_Addon_v2.pretty")(options "")(descr ""))
+  (lib (name "TE_1-2328702-0")(type "KiCad")(uri "${KIPRJMOD}/TE_1-2328702-0")(options "")(descr ""))
+  (lib (name "amphenol_12402012E212A")(type "KiCad")(uri "${KIPRJMOD}/amphenol_12402012E212A")(options "")(descr ""))
+  (lib (name "SLW_1353_2A_RA_D")(type "KiCad")(uri "${KIPRJMOD}/SLW_1353_2A_RA_D")(options "")(descr ""))
+  (lib (name "CON_SMA_EDGE_S")(type "KiCad")(uri "${KIPRJMOD}/CON_SMA_EDGE_S")(options "")(descr ""))
+  (lib (name "tca8418")(type "KiCad")(uri "${KIPRJMOD}/tca8418")(options "")(descr ""))
+  (lib (name "Keyboard")(type "KiCad")(uri "${KIPRJMOD}/Keyboard/Keyboard.pretty")(options "")(descr ""))
+  (lib (name "Communicator")(type "KiCad")(uri "${KIPRJMOD}/Communicator")(options "")(descr ""))
+  (lib (name "wurth_led_155124YS73200")(type "KiCad")(uri "${KIPRJMOD}/wurth_led_155124YS73200")(options "")(descr ""))
+)

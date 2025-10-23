@@ -1,0 +1,51 @@
+### Footprint positions - created on 2025-10-03T11:30:18+0200 ###
+### Printed by KiCad version 9.0.3
+## Unit = mm, Angle = deg.
+## Side : bottom
+# Ref     Val                      Package                                                PosX       PosY       Rot  Side
+BT1       ~                        BatteryMockup                                      120.6500  -110.4900  180.0000  bottom
+C1        10uF                     C_0603_1608Metric                                  174.2440   -68.2120  -90.0000  bottom
+C4        10uF                     C_0603_1608Metric                                  191.4010   -93.4405   90.0000  bottom
+C5        10uF                     C_0603_1608Metric                                  205.5358   -94.5711  180.0000  bottom
+C6        10uF                     C_0603_1608Metric                                  212.4100   -92.1835   90.0000  bottom
+C7        1uF                      C_0603_1608Metric                                  162.2682   -92.2020  180.0000  bottom
+C8        1uF                      C_0603_1608Metric                                  198.9300   -80.5050   90.0000  bottom
+C9        1uF                      C_0603_1608Metric                                  146.1770   -74.6630   90.0000  bottom
+D1        Sidemount_LED            WL-SMSW_1204                                       124.0790   -62.2300  180.0000  bottom
+D2        LED                      LED_0805_2012Metric                                197.5510   -91.6885   90.0000  bottom
+D3        1N5819WS                 D_SOD-323                                          204.3550   -90.6935   90.0000  bottom
+J1        USB-C_Connector          AMPHENOL_12402012E212A                             220.9800   -83.8200  -90.0000  bottom
+J2        1-2328702-0_upside_down  TE_1-2328702-0                                     143.0000   -74.4500   90.0000  bottom
+J3        CON-SMA-EDGE-S           RFSOLUTIONS_CON-SMA-EDGE-S                         207.2200   -62.3500  -90.0000  bottom
+J4        PH2.0_Connector          JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal   185.0000   -95.0000   90.0000  bottom
+M1        Wio-SX1262-N             Wio1262-N                                          211.6420   -81.5660  180.0000  bottom
+Q1        BC849                    SOT-23                                             145.1125   -70.1700  180.0000  bottom
+Q2        DMG2305                  SOT-23                                             201.1855   -90.6065  180.0000  bottom
+R1        1k                       R_0603_1608Metric                                  129.8570   -62.2300  180.0000  bottom
+R2        5.1k                     R_0603_1608Metric                                  217.9320   -77.4700    0.0000  bottom
+R3        5.1k                     R_0603_1608Metric                                  217.9320   -90.1700  180.0000  bottom
+R4        1.2_k                    R_0603_1608Metric_Pad0.98x0.95mm_HandSolder        207.7720   -67.5640   90.0000  bottom
+R5        1k                       R_0603_1608Metric                                  149.3520   -69.2150  180.0000  bottom
+R6        50_Ohm                   R_0603_1608Metric_Pad0.98x0.95mm_HandSolder        210.8200   -68.5800    0.0000  bottom
+R7        3.9_Ohms                 R_0603_1608Metric                                  142.0005   -69.4710   90.0000  bottom
+R8        2k                       R_0603_1608Metric                                  191.4010   -90.0885  -90.0000  bottom
+R9        5.1k                     R_0603_1608Metric                                  197.2970   -88.1955   90.0000  bottom
+R10       100k                     R_0603_1608Metric                                  199.0750   -88.1955  -90.0000  bottom
+R11       100k                     R_0603_1608Metric                                  206.3108   -92.1957   90.0000  bottom
+R12       5.1k                     R_0603_1608Metric                                  162.5600   -89.4080   90.0000  bottom
+R13       5.1k                     R_0603_1608Metric                                  160.5280   -89.4080   90.0000  bottom
+R14       5.1k                     R_0603_1608Metric                                  176.5300   -69.8500  -90.0000  bottom
+R15       5.1k                     R_0603_1608Metric                                  178.3080   -69.8500  -90.0000  bottom
+R16       50_Ohm                   R_0603_1608Metric_Pad0.98x0.95mm_HandSolder        210.8200   -66.6750  180.0000  bottom
+R17       5.1k                     R_0603_1608Metric                                  186.8170   -76.1492  180.0000  bottom
+R18       100k                     R_0603_1608Metric                                  156.8450   -87.6300    0.0000  bottom
+R19       5.1k                     R_0603_1608Metric                                  165.9128   -92.2020  180.0000  bottom
+REF**     Fiducial_1mm_Mask2mm     Fiducial_1mm_Mask2mm                                92.7500   -63.0000  180.0000  bottom
+REF**     Fiducial_1mm_Mask2mm     Fiducial_1mm_Mask2mm                               213.5000  -136.2500  180.0000  bottom
+SW2       SW_SPST                  SW_Tactile_SPST_NO_Straight_CK_PTS636Sx25SMTRLFS   182.8800   -80.0100   90.0000  bottom
+SW3       SLW-91353-2A-RA-D        SW_SLW-91353-2A-RA-D                                80.0100   -83.8200  -90.0000  bottom
+U1        ESP32-S3-WROOM-1         ESP32-S3-WROOM-1                                   163.4080   -72.9780  180.0000  bottom
+U2        MCP73831-2-OT            SOT-23-5                                           194.3760   -91.3075   90.0000  bottom
+U3        AP2112K-3.3              SOT-23-5                                           209.3620   -92.1835    0.0000  bottom
+U4        TCA8418RTWR              VQFN-24-1EP_4x4mm_P0.5mm_EP2.5x2.5mm               163.5960   -96.5200  180.0000  bottom
+## End

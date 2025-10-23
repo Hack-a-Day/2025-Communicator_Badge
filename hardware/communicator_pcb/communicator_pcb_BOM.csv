@@ -1,0 +1,33 @@
+Reference	Qty	Value	DNP	Footprint	Part	Datasheet	
+C1,C4,C5,C6	4	10uF		Capacitor_SMD:C_0603_1608Metric		~	
+C7,C8	2	1uF		Capacitor_SMD:C_0603_1608Metric		~	
+D1	1	Sidemount LED		wurth_led_155124YS73200:WL-SMSW_1204	https://www.digikey.de/en/products/detail/w%C3%BCrth-elektronik/155124YS73200/4490047	https://www.we-online.com/components/products/datasheet/155124YS73200.pdf	
+D2	1	LED		LED_SMD:LED_0805_2012Metric		~	
+D3	1	1N5819WS		Diode_SMD:D_SOD-323	https://www.digikey.de/en/products/detail/shenzhen-slkormicro-semicon-co-ltd/1N5819WS/26112850	https://datasheet.lcsc.com/lcsc/2204281430_Guangdong-Hottech-1N5819WS_C191023.pdf	
+J1	1	USB-C Connector		amphenol_12402012E212A:AMPHENOL_12402012E212A	https://www.digikey.de/en/products/detail/amphenol-cs-commercial-products/12402012E212A/13683192	https://cdn.amphenol-cs.com/media/wysiwyg/files/drawing/12402012-10.pdf	
+J2	1	1-2328702-0_upside_down		TE_1-2328702-0:TE_1-2328702-0	https://www.digikey.de/en/products/detail/te-connectivity-amp-connectors/1-2328702-0/9565577		
+J3	1	CON-SMA-EDGE-S		CON_SMA_EDGE_S:RFSOLUTIONS_CON-SMA-EDGE-S			
+J4	1	PH2.0 Connector		Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal	https://www.digikey.com/en/products/detail/jst-sales-america-inc/S2B-PH-SM4-TB/926655	https://www.jst-mfg.com/product/pdf/eng/ePH.pdf	
+J8	1	Simple_Addon_v2		Simple_Addon_v2:Simple_Addon_v2-BADGE-2x3	Where are we getting these?  Can we get the nice shrouded onew?	https://hackaday.io/project/175182-simple-add-ons-sao	
+M1	1	Wio-SX1262-N		Wio1262:Wio1262-N	Order from Seeed	https://files.seeedstudio.com/products/SenseCAP/Wio_SX1262/Wio-SX1262-N_Module_Datasheet.pdf	
+Q1	1	BC849		Package_TO_SOT_SMD:SOT-23	https://www.digikey.de/en/products/detail/onsemi/BC849CLT1G/1476052	http://www.infineon.com/dgdl/Infineon-BC847SERIES_BC848SERIES_BC849SERIES_BC850SERIES-DS-v01_01-en.pdf?fileId=db3a304314dca389011541d4630a1657	
+Q2	1	DMG2305		Package_TO_SOT_SMD:SOT-23	https://www.digikey.de/en/products/detail/diodes-incorporated/DMG2305UX-7/4340667	https://www.diodes.com/assets/Datasheets/DMG2301L.pdf	
+R1,R5	2	1k		Resistor_SMD:R_0603_1608Metric		~	
+R2,R3,R9,R12,R13,R14,R15,R17,R19	9	5.1k		Resistor_SMD:R_0603_1608Metric		~	
+R4	1	1.2 k				Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder	~
+R6,R16	2	50 Ohm				Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder	~
+R7	1	3.9 Ohms		Resistor_SMD:R_0603_1608Metric		~	
+R8	1	2k		Resistor_SMD:R_0603_1608Metric		~	
+R10,R11,R18	3	100k		Resistor_SMD:R_0603_1608Metric		~	
+SW1	1	Keyboard		Keyboard:Keyboard	Arturo's keyboard		
+SW2	1	SW_SPST		Button_Switch_SMD:SW_Tactile_SPST_NO_Straight_CK_PTS636Sx25SMTRLFS	https://www.digikey.de/en/products/detail/c-k/PTS636SK25FSMTR-LFS/10071743 	~	
+SW3	1	SLW-91353-2A-RA-D		SLW_1353_2A_RA_D:SW_SLW-91353-2A-RA-D	https://www.digikey.de/en/products/detail/same-sky-formerly-cui-devices/SLW-91353-2A-RA-D/21259968	https://www.cuidevices.com/product/resource/digikeypdf/slw-91353-2a-ra-d.pdf	
+U1	1	ESP32-S3-WROOM-1		RF_Module:ESP32-S3-WROOM-1	From Espressif	https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf	
+U2	1	MCP73831-2-OT		Package_TO_SOT_SMD:SOT-23-5	https://www.digikey.de/en/products/detail/microchip%20technology%20(va)/MCP73831T-2DCI-OT/1979974?utm_source=findchips&utm_medium=aggregator&utm_campaign=buynow	http://ww1.microchip.com/downloads/en/DeviceDoc/20001984g.pdf	
+U3	1	AP2112K-3.3		Package_TO_SOT_SMD:SOT-23-5	https://www.digikey.de/en/products/detail/diodes%20incorporated%20(va)/AP2112K-3.3TRG1/4505257?utm_source=findchips&utm_medium=aggregator&utm_campaign=buynow	https://www.diodes.com/assets/Datasheets/AP2112.pdf	
+U4	1	TCA8418RTWR		Package_DFN_QFN:VQFN-24-1EP_4x4mm_P0.5mm_EP2.5x2.5mm	https://www.digikey.de/en/products/detail/texas-instruments/TCA8418RTWR/2172843	https://www.ti.com/lit/ds/symlink/tca8418.pdf	
+							
+							
+C9	1	1uF	DNP			Capacitor_SMD:C_0603_1608Metric	~
+J6	1	Expansion	DNP			Connector_PinSocket_2.54mm:PinSocket_1x04_P2.54mm_Vertical	~
+J7	1	Serial Expansion	DNP			Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical	~

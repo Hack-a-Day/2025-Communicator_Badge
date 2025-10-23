@@ -1,0 +1,11 @@
+### Footprint positions - created on 2025-10-03T11:30:18+0200 ###
+### Printed by KiCad version 9.0.3
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val               Package                               PosX       PosY       Rot  Side
+                                                              187.8500   -92.0000    0.0000  top
+J6        Expansion         PinSocket_1x04_P2.54mm_Vertical   195.5800   -66.0400    0.0000  top
+J7        Serial_Expansion  PinHeader_1x03_P2.54mm_Vertical    81.2800   -71.1200    0.0000  top
+J8        Simple_Addon_v2   Simple_Addon_v2-BADGE-2x3         186.1220   -70.8460    0.0000  top
+SW1       Keyboard          Keyboard                          150.0000  -114.0000    0.0000  top
+## End

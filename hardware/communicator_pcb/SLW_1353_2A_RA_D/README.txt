@@ -1,0 +1,1 @@
+3D model sourced from: https://www.sameskydevices.com/product/resource/pcbfootprint/slw-91353-2a-ra-d#tab-samacsys-pcb

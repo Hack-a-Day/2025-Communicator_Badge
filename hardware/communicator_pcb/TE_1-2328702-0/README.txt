@@ -1,0 +1,1 @@
+3D model sourced from: https://www.te.com/en/product-1-2328702-0.html
