@@ -1,0 +1,121 @@
+(footprint "BatteryMockup"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 0 -12.7 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "242026c8-0f2f-4d97-9033-b04a31723ddc")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "BatteryMockup"
+		(at 0 10.16 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "a3db0405-1a09-439e-995a-3d6c2f4b5ac1")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a0910862-d79a-45b5-81a0-7d1663ec124e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "068c6bbf-7b90-41b0-87c7-9bd357224a3f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(fp_line
+		(start -30 -25)
+		(end 30 -25)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "2d3ca7b1-f8e5-4ab5-9a12-f6f8bf3da1fd")
+	)
+	(fp_line
+		(start -30 25)
+		(end -30 -25)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "e57347c6-bd9d-41eb-98e0-851c64bedf22")
+	)
+	(fp_line
+		(start 30 -25)
+		(end 30 25)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "d3a6956e-6b78-4091-a6d5-c39d6f69f11e")
+	)
+	(fp_line
+		(start 30 25)
+		(end -30 25)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "c552ee49-ed76-4218-aa98-4cd9fc6f1faf")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 12.7 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "91e28a78-0331-4c50-896e-45b07cb7b356")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(embedded_fonts no)
+	(model "${KIPRJMOD}/Communicator.3dshapes/LiPo-Body.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)
