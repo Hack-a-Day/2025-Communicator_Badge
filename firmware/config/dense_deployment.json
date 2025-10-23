@@ -1,0 +1,59 @@
+{
+  "description": "Optimized configuration for 500+ badge dense deployment at Supercon",
+  "based_on": "Dense Deployment of LoRa Networks research paper (documentation/appnotes/)",
+
+  "mac": {
+    "phase2_probability": 0.05,
+    "backoff_window": 23,
+    "difs_ms": 400,
+    "use_cad": true,
+    "notes": {
+      "phase2_probability": "5% of nodes start by sending RTS (P=0.05 for 500+ nodes)",
+      "backoff_window": "W=23 for high node count, provides [0-23]*400ms = 0-9.2s distribution",
+      "difs_ms": "Preamble duration for SF12BW125 (12.25 symbols * 32.768ms)",
+      "use_cad": "Initial CAD check - reliable when detects activity, skip when negative"
+    }
+  },
+
+  "radio": {
+    "freq_mhz": 915.0,
+    "spreading_factor": 12,
+    "bandwidth": 125,
+    "tx_power": 14,
+    "coding_rate": 5,
+    "sync_word": "0x1424",
+    "preamble_length": 8,
+    "notes": {
+      "freq_mhz": "915.0 for US, 868.0 for EU",
+      "spreading_factor": "SF12 for maximum range and reliability at conference",
+      "bandwidth": "125 kHz standard",
+      "tx_power": "14 dBm conservative start (can increase to 22 dBm if needed)",
+      "coding_rate": "4/5 for good error correction without excessive overhead"
+    }
+  },
+
+  "timing": {
+    "phase1_listen_duration_ms": 9786,
+    "rts_packet_toa_ms": 586,
+    "max_data_packet_toa_ms": 9836,
+    "typical_message_toa_ms": 4101,
+    "notes": {
+      "info": "Timing values calculated by code (simplified approximation, not exact LoRa math)",
+      "phase1_listen_duration_ms": "W * DIFS + TOA(RTS) = 23*400 + 586 = 9786ms",
+      "rts_packet_toa_ms": "5 bytes: 401 + (5 * 37) = 586ms",
+      "max_data_packet_toa_ms": "255 bytes: 401 + (255 * 37) = 9836ms",
+      "typical_message_toa_ms": "100 bytes: 401 + (100 * 37) = 4101ms"
+    }
+  },
+
+  "app": {
+    "max_message_length": 240,
+    "channel_id": 0,
+    "network_id": "SUPERCON2025",
+    "notes": {
+      "max_message_length": "Keeps ToA reasonable (~4s at SF12BW125)",
+      "channel_id": "Can support multiple logical channels/topics",
+      "network_id": "Distinguish from other LoRa networks in area"
+    }
+  }
+}
