@@ -260,6 +260,7 @@ class App(BaseApp):
                         if self.picker_image:
                             self.picker_image.delete()
                     except Exception:
+                        # Ignore errors when deleting picker image; image may not exist or may already be deleted.
                         pass
                     fullpath = self.image_dir + "/" + self.headshot_files[self.headshot_index]
                     try:
