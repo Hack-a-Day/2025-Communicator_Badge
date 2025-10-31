@@ -1,6 +1,5 @@
 
 ## Here be dragons.  You probably just want to use the included lvgl-micropython binary that's tested and verified to work with the badge:
-# lvgl_micropy_ESP32_GENERIC_S3-SPIRAM_OCT-16.bin
 
 ## But here's how we built it.
 
@@ -45,9 +44,6 @@ git clone https://github.com/dmazzella/ucryptography.git ../ucryptography
 pushd ../ucryptography && git submodule update --init --depth 1 && popd
 
 python3 make.py esp32 BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT --flash-size=16 DISPLAY=nv3007 --enable-uart-repl=y --enable-cdc-repl=n 
-# FROZEN_MANIFEST=../hackaday_frozen_manifest.py 
-# strange problem with the below, which should work: do not!  file bug report later.
-# USER_C_MODULES=/home/elliot/2025_communicator_badge/firmware/ucryptography/micropython.cmake
 
 ## flash it with esptool:
 # if it already has a micropython on it...  
