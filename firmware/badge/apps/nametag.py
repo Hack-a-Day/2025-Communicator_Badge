@@ -217,6 +217,7 @@ class App(BaseApp):
                         self.name_label.delete()
                         self.name_label = None
                 except Exception:
+                    # It is safe to ignore errors when deleting the name label, as it may not exist or may have already been deleted.
                     pass
 
                 # Build picker preview
