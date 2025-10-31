@@ -246,6 +246,7 @@ class App(BaseApp):
                     self.p.set_menubar_button_label(3, "Next")
                     self.p.set_menubar_button_label(4, "Cancel")
                 except Exception:
+                    # Ignore errors when setting menubar button labels; non-critical UI update.
                     pass
                 self.app_state = self.app_states.index("in_pick_image")
 
