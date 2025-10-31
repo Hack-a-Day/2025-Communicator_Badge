@@ -263,7 +263,7 @@ source venv/bin/activate
 venv/Scripts/activate
 
 # You need to install Python packages into the virtual environment. You only need to do this once.
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Syncing libraries
