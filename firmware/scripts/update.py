@@ -9,6 +9,7 @@ import hashlib
 import os
 import pathlib
 import subprocess
+from typing import Iterable
 
 
 def check_path(path: str, ) -> dict[str, bytes]:
@@ -30,6 +31,15 @@ def check_dir(path: str) -> dict[str, str]:
     files_uncleaned = check_path(path)
     files = {fn.replace(path.strip() + "/", "/").replace("\\", "/"): binascii.hexlify(hash).decode() for fn, hash in files_uncleaned.items()}
     return files
+
+def sort_paths_recursively(paths: Iterable[str]) -> list[str]:
+    """Return paths sorted depth-first so parents appear before children."""
+    return sorted(paths, key=lambda name: (name.count("/"), name))
+
+def format_recursive_path(name: str) -> str:
+    """Indent nested entries to make the hierarchy clearer."""
+    depth = max(name.count("/") - 1, 0)
+    return f"{'  ' * depth}{name}"
 
 def get_badge_files() -> dict[str, str]:
     """Get the files on the badge and their checksums."""
@@ -106,7 +116,7 @@ if __name__ == "__main__":
         print("Status values: * different, + only on local (push will add), - only on badge (push will delete)")
         print(f"Status {'Filename':<40s} SHA256")
         all_files = set(local_files.keys()).union(set(badge_files.keys()))
-        for name in sorted(all_files):
+        for name in sort_paths_recursively(all_files):
             if name in local_files and name in badge_files:
                 if local_files[name] == badge_files[name]:
                     status = " "
@@ -121,7 +131,7 @@ if __name__ == "__main__":
             hash = badge_files[name] if name in badge_files else local_files[name]
             if hash == "":
                 hash = "directory"
-            print(f"{status}      {name:<40s} {hash}")
+            print(f"{status}      {format_recursive_path(name):<40s} {hash}")
 
     if args.reset:
         print("Resetting badge...")
