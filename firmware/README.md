@@ -281,7 +281,7 @@ There are two methods to copy all the files to the badge.
 `mpremote` will copy everything in the target directory to or from the badge.
 ```bash
 # Copy from computer to badge
-mpremote cp -r badge/ :
+mpremote cp -r badge/* :
 
 # Copy from badge to computer
 mpremote cp -r : badge-backup/
