@@ -290,8 +290,8 @@ class App(BaseApp):
                     try:
                         if self.picker_image:
                             self.picker_image.delete()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print("Nametag: failed to delete picker_image:", e)
                     fullpath = self.image_dir + "/" + self.headshot_files[self.headshot_index]
                     try:
                         self.picker_image = graphics.create_image(fullpath, self.p.content)
