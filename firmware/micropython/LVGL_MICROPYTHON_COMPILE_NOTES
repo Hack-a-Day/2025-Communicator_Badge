@@ -1,0 +1,62 @@
+
+## Here be dragons.  You probably just want to use the included lvgl-micropython binary that's tested and verified to work with the badge:
+# lvgl_micropy_ESP32_GENERIC_S3-SPIRAM_OCT-16.bin
+
+## But here's how we built it.
+
+## Build uses lvgl_micropython: https://github.com/lvgl-micropython/lvgl_micropython
+
+## We got our screen driver accepted, so it should be an "easy" build now.
+## in firmware directory
+git clone https://github.com/lvgl-micropython/lvgl_micropython
+cd lvgl_micropython
+#  our board will be N16R8 : 16 megs quad flash, 8 megs octal spi psram 
+python3 make.py esp32 BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT --flash-size=16 DISPLAY=nv3007 --enable-uart-repl=y --enable-cdc-repl=n 
+
+## This will download a bunch of dependencies and start the compilation, but it will fail.
+## upstream micropython has a bug 
+
+# apply the patch to make micropython compile with GCC 15
+cp ../inline_thumb_patch lib/micropython/
+cd lib/micropython/
+patch -p1 < inline_thumb_patch
+## verify that it fixed the inline thumb by adding __attribute__((nonstring))
+git diff py/emitinlinethumb.c
+
+#  try compile again
+#  It will get farther, after downloading a whole bunch more
+cd ../..
+python3 make.py esp32 BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT --flash-size=16 DISPLAY=nv3007 --enable-uart-repl=y --enable-cdc-repl=n 
+
+## This time, it should work.  
+## Note that because the build is so large, it will complain about having to re-adjust partitions.  Don't sweat it.
+## Find your binary in build/lvgl_micropy_ESP32_GENERIC_S3-SPIRAM_OCT-16.bin
+ls build
+
+## We're also using some other "frozen"-in compiled libraries: 
+### still from firmware/lvgl_micropython directory
+## pull down micropython-lib into parent firmware directory
+#
+# at the moment, nothing from micropython-lib, but we'll keep this here just in case
+# git clone https://github.com/micropython/micropython-lib/ ../micropython-lib
+
+## Frozen in ucryptography lib for command signing
+git clone https://github.com/dmazzella/ucryptography.git ../ucryptography
+pushd ../ucryptography && git submodule update --init --depth 1 && popd
+
+python3 make.py esp32 BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT --flash-size=16 DISPLAY=nv3007 --enable-uart-repl=y --enable-cdc-repl=n 
+# FROZEN_MANIFEST=../hackaday_frozen_manifest.py 
+# strange problem with the below, which should work: do not!  file bug report later.
+# USER_C_MODULES=/home/elliot/2025_communicator_badge/firmware/ucryptography/micropython.cmake
+
+## flash it with esptool:
+# if it already has a micropython on it...  
+mpremote bootloader  && sleep 2s
+## if not, put board into bootloader mode: bridge boot pin and hit reset.  release boot pin.
+## then flash
+esptool --port /dev/ttyACM0 erase-flash
+esptool --port /dev/ttyACM0 --baud 1500000 write-flash 0 build/lvgl_micropy_ESP32_GENERIC_S3-SPIRAM_OCT-16.bin
+
+
+
+

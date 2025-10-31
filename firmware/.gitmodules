@@ -1,0 +1,6 @@
+[submodule "libs/micropython-lib"]
+	path = libs/micropython-lib
+	url = https://github.com/micropython/micropython-lib.git
+[submodule "libs/mp-crc"]
+	path = libs/mp-crc
+	url = https://github.com/rkompass/mp-crc.git
