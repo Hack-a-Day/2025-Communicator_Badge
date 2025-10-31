@@ -63,7 +63,7 @@ class Keyboard:
         CTL,  JW,   ALT, "|", " ", None, RIGHT, DOWN, LEFT, ALT,   # 41-50 R4
         None, None, "_", "^", "%", "$",  "}",   "{",  "P",  None,  # 51-60 R5
         None, None, "*", "#", "@", "!",  ENTER, '"',  ":",  None,  # 61-70 R6
-        None, None, "?", "+", ",", ".",  SFT,   UP,   DEL,   None,  # 71-80 R7
+        None, None, "?", "+", ",", ")",  SFT,   UP,   DEL,   None,  # 71-80 R7
     )
     # fmt: on
 
