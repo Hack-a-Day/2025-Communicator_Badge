@@ -31,7 +31,7 @@ class Badge:
             self.config.set("nametag", "Your Name Here!")
         # Nametag image settings (defaults): show image on, use a default headshot path
         if "nametag_show_image" not in self.config.db.keys():
-            self.config.set("nametag_show_image", b'1')
+            self.config.set("nametag_show_image", b'false')
         if "nametag_image" not in self.config.db.keys():
             # Store a reasonable default; user can replace this file or change the path
             self.config.set("nametag_image", b'images/headshots/wrencher.png')

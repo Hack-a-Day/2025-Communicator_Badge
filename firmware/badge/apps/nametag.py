@@ -321,7 +321,7 @@ class App(BaseApp):
                     chosen = self.image_dir + "/" + self.headshot_files[self.headshot_index]
                     try:
                         self.badge.config.set("nametag_image", chosen.encode())
-                        self.badge.config.set("nametag_show_image", b"1")
+                        self.badge.config.set("nametag_show_image", b"false")
                         self.badge.config.flush()
                     except Exception as e:
                         print("Nametag: failed to save config:", e)
