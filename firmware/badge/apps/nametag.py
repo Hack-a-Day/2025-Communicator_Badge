@@ -36,7 +36,7 @@ class App(BaseApp):
         self.username = self.badge.config.get("nametag").decode().strip()
         # Nametag image configuration
         try:
-            self.show_image = self.badge.config.get("nametag_show_image").decode().strip() in ("1", "true", "True")
+            self.show_image = self.badge.config.get("nametag_show_image").decode().strip() in ("true", "True")
         except Exception:
             self.show_image = False
         try:
