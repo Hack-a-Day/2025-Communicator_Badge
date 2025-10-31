@@ -394,7 +394,7 @@ class App(BaseApp):
             self.image_path = "images/headshots/wrencher.png"
         self.p.create_infobar([f"Hello, My Name Is: {self.username}", "Nametag App"])
         self.p.create_content()
-        self.p.create_menubar(["Name", "Headshot", "Fullscreen", "", "Home"])
+        self.p.create_menubar(["Name", "Pick Img", "Fullscreen", "", "Home"])
         # Build content: image on the left (rounded), name label to the right. No scaling.
         self.name_label = None
         self.headshot = None
