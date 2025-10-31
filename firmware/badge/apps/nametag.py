@@ -86,11 +86,11 @@ class App(BaseApp):
             print("enter username")
             self.p.create_text_box(self.username)
             self.app_state = self.app_states.index("in_add_username")
+            self.p.set_menubar_button_label(4, "Done")
 
         if self.app_states[self.app_state] == "in_add_username":
             key, text = self.p.text_box_type(self.badge.keyboard)
 
-            self.p.set_menubar_button_label(4, "Done")
             if self.badge.keyboard.f5() or self.badge.keyboard.f1():
                 self.username = self.p.text_box.get_text().strip()
                 self.badge.config.set("nametag", self.username)
