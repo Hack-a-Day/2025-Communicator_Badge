@@ -78,9 +78,11 @@ if __name__ == "__main__":
         for name in files_to_delete:
             if name.startswith("/data"):  # Don't delete the data/ directory.
                 continue
+            if "__pycache__" in name:  # Don't delete cache files
+                continue
             if badge_files[name] == "":
                 print(f"Removing directory {name} from badge...")
-                subprocess.run(["mpremote", "rmdir", name], check=True)
+                subprocess.run(["mpremote", "rmdir", "-r", name], check=True)
             else:
                 print(f"Deleting {name} from badge...")
                 subprocess.run(["mpremote", "rm", name], check=True)
