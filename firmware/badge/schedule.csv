@@ -1,0 +1,34 @@
+SAT$10:00 AM$LACM$Crafting the Final Frontier$Panel$startrek.png$This panel brings together artists that have helped shape the look and feel of Star Trek.
+SAT$11:30 AM$LACM$Mechanically Interesting PCB Assemblies$Debra Ansell$ansell.png$"Covers a range of projects built from custom LED PCBs combined into 2D and 3D structures, including the ""Bendy SAO"" which won at Supercon 2024."
+SAT$01:00 PM$LACM$A Practical IR Spectrum Guide$Arsenio Menendez$menendez.png$Explores the capabilities of SWIR, MWIR, and LWIR infrared bands for surveillance, industrial inspection, target tracking, and more.
+SAT$01:30 PM$LACM$Metal 3D Printing In Space$Allie Katz / SJ Jones$katz.png$A discussion about computational design, artful engineering, and 3D prints that can survive a rocket trip.
+SAT$02:30 PM$LACM$The Illuminating World of Color & LEDs$Reid Sox-Harris$soxharris.png$This talk explores the physiology of the human eye that allows RGB to be so effective, when alternatives are better, and how to choose the right lighting for your project.
+SAT$03:00 PM$LACM$Exploring Ham Radio Mesh Networks$Javier de la Torre$torre.png$Learn how services like weather stations, video streams, email, and VOIP are run entirely over a ham radio mesh network.
+SAT$03:30 PM$LACM$Probing Pins for Protocol Polyglots$Joe FitzPatrick$fitzpatrick.png$Learn to stack multiple protocols, like UART, SPI, and I2C, onto the same GPIO pins by exploiting undefined regions.
+SAT$04:00 PM$LACM$Weird Hacks, Questionable Decisions$Amie D./ Karl K.$dansby.png$Dive into the wild world of biohacking, rogue experiments, and deeply questionable decisions in the name of science, curiosity, and chaos.
+SAT$05:00 PM$LACM$Optical Espionage: Lasers to Keystrokes$Samy Kamkar$kamkar.png$Covers an advanced laser microphone, and the components needed for cutting-edge eavesdropping.
+SAT$06:00 PM$LACM$Cracking Open a Classic DOS Game$Andrew Lewton$lewton.png$Take a nostalgic and technical deep dive into The Lawnmower Man, a quirky full-motion video game for DOS CD-ROM.
+SAT$06:30 PM$LACM$State of Hackaday$Elliot Williams$williams.png$An update on the Hackaday community from the Editor-in-Chief
+SAT$11:30 AM$DSLB$Splicing Fiber for the Home Gamer$Rob Ludwick$wrencher.png$You can splice single-mode fiber at home, and its easier (and cheaper) than you think.
+SAT$01:00 PM$DSLB$Simulate Your Embedded System$Nathan Jones$jones.png$Lean how simulating your microcontroller project can unlock faster development and more flexible firmware.
+SAT$01:30 PM$DSLB$Movie Magic and Practical Effects$Davis DeWitt$dewitt.png$From explosive stunts to robots with personality, this talk explores how blending hardware hacking with art creates functional and emotional storytelling.
+SAT$02:30 PM$DSLB$CircuitScout: Probing PCBs the Easy Way$Fangzheng Liu$liu.png$Introducing CircuitScout -- a small desktop machine that automates hardware debugging using a robotic probe.
+SAT$03:00 PM$DSLB$Ghostbus: Simpler CSR Handling in Verilog$Keith Penney$penney.png$Ghostbus automates address assignment and bus routing entirely in Verilog to keep designs clean, maintainable, and functional.
+SAT$03:30 PM$DSLB$DIY Depth: Shooting and Printing 3D Images$Josh Martin$martin.png$Learn how stereoscopic film cameras work, the mechanics of lenticular lenses and how to print convincing 3D images at home.
+SAT$04:00 PM$DSLB$Reverse Engineering Abandoned IoT Hardware$Artem Makarov$makarov.png$Discover how curiosity and persistence can breathe new life into forgotten hardware and tackle obscure technical challenges.
+SAT$05:00 PM$DSLB$Bringing #badgelife to Academia$Dr. Zach Peterson$peterson.png$Hear how students combined art, technology, and real-world tools to build community and create projects that are as accessible as they are unforgettable.
+SAT$05:30 PM$DSLB$Magic of Electropermanent Magnets$Aaron Eiche$eiche.png$Electropermanent magnets are like magic, and they can be built using cheap off-the-shelf components.
+SAT$06:00 PM$DSLB$From Sunlight to Silicon$Joe Needleman$needleman.png$How to design and run a solar-powered computer cluster, focusing on NVIDIA Jetson Orin hardware.
+SUN$10:30 AM$LACM$Lightning Talks$Random Hackers$wrencher.png$Short talks presented by Supercon attendees.
+SUN$01:00 PM$LACM$Bytes to Bobbins: Embroidery Machines$Kay Antoniak$antioniak.png$This talk explores how an embroidery machine brings out the best of tinkering: production, customization, and creative hacks.
+SUN$01:30 PM$LACM$Cooking FPGAs with Gamma Rays$Jeremy Hong$hong.png$This talk presents research on destructive testing of FPGAs to study failure modes and resilience in high-radiation environments.
+SUN$02:00 PM$LACM$Beyond the Horizon$Panel$nasa.png$Panel discussion on the disruptive innovation of commercial New Space companies.
+SUN$03:00 PM$LACM$What Makes a Robot Feel Alive?$Cyril Engmann$engmann.png$This talk dives into the art and engineering of programming personality into pet robots. Learn design tips, technical insights, and lessons from building expressive bots that blur the line between hardware and character.
+SUN$03:30 PM$LACM$Covert Communication with Meshtastic$Daryll Strauss$strauss.png$Learn how Meshtastic uses low-cost LORA radios to build ad hoc mesh networks for secure, decentralized communication.
+SUN$05:00 PM$LACM$Badge Hacking Ceremony$Hackaday Staff$wrencher.png$Honor and glory await -- come show off your badge hacks!
+SUN$10:30 AM$DSLB$rtlsdr.tv: Broadcast TV in your browser$Karl Koscher$koscher.png$This talk introduces rtlsdr.tv and will cover the basics of digital video streams, feeding live content to <video> tags through Media Source Extensions, and using WebUSB.
+SUN$11:30 AM$DSLB$The Circuits Behind Your Multimeter$John Duffy$duffy.png$Explore the inner workings of your multimeter, plus insights from building one, the design choices, and the tradeoffs behind common models.
+SUN$01:00 PM$DSLB$SAOs with SACs$Bob Hickman$hickman.png$Discover how to maximize your SAO (Simple Add-On) builds using SACs, sketchy, affordable components that can deliver surprising results.
+SUN$01:30 PM$DSLB$Hardware for Emergent Games$Elli Furedy$furedy.png$From Conways Game of Life to cyberpunk bounty hunting, this talk explores how thoughtful design in tech and hardware can lead to human connection and community.
+SUN$02:30 PM$DSLB$Bringing Animatronics to Life$DJ Harrigan$harrigan.png$Explore the considerations behind designing a custom motion capture device to remotely control a complex animatronic.
+SUN$03:30 PM$DSLB$Aurora Blue$Douglas Goodwin$goodwin.png$Learn about Aurora Blue -- cyanotype prints exposed by custom light-field instruments that flow like auroras.

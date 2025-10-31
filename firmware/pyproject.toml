@@ -1,0 +1,10 @@
+[project]
+name = "esp32-badge"
+version = "0.1.0"
+description = "Hackaday Supercon 2025 Badge Firmware"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "esptool>=4.8.1",
+    "mpremote>=1.25.0",
+]

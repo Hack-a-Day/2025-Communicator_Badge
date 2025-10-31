@@ -1,0 +1,40 @@
+diff --git a/py/emitinlinethumb.c b/py/emitinlinethumb.c
+index 7818bb4..c651c26 100644
+--- a/py/emitinlinethumb.c
++++ b/py/emitinlinethumb.c
+@@ -147,7 +147,7 @@ static bool emit_inline_thumb_label(emit_inline_asm_t *emit, mp_uint_t label_num
+ }
+ 
+ typedef struct _reg_name_t { byte reg;
+-                             byte name[3];
++                             byte name[3] __attribute__ ((nonstring));
+ } reg_name_t;
+ static const reg_name_t reg_name_table[] = {
+     {0, "r0\0"},
+@@ -365,7 +365,7 @@ static int get_arg_label(emit_inline_asm_t *emit, const char *op, mp_parse_node_
+ }
+ 
+ typedef struct _cc_name_t { byte cc;
+-                            byte name[2];
++                            byte name[2] __attribute__ ((nonstring));
+ } cc_name_t;
+ static const cc_name_t cc_name_table[] = {
+     { ASM_THUMB_CC_EQ, "eq" },
+@@ -385,7 +385,7 @@ static const cc_name_t cc_name_table[] = {
+ };
+ 
+ typedef struct _format_4_op_t { byte op;
+-                                char name[3];
++                                char name[3] __attribute__ ((nonstring));
+ } format_4_op_t;
+ #define X(x) (((x) >> 4) & 0xff) // only need 1 byte to distinguish these ops
+ static const format_4_op_t format_4_op_table[] = {
+@@ -425,7 +425,7 @@ static const format_9_10_op_t format_9_10_op_table[] = {
+ // actual opcodes are: 0xee00 | op.hi_nibble, 0x0a00 | op.lo_nibble
+ typedef struct _format_vfp_op_t {
+     byte op;
+-    char name[3];
++    char name[3] __attribute__ ((nonstring));
+ } format_vfp_op_t;
+ static const format_vfp_op_t format_vfp_op_table[] = {
+     { 0x30, "add" },
