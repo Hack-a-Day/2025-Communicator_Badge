@@ -118,6 +118,9 @@ class App(BaseApp):
                 self.p.close_text_box()
                 self.p.set_menubar_button_label(4, "Home")
                 self.app_state = self.app_states.index("default")
+                # Re-render the main view so the updated name appears immediately
+                self.switch_to_foreground()
+                return
 
         if self.app_states[self.app_state] == "enter_fullscreen":
             ## overlay
