@@ -301,6 +301,7 @@ class App(BaseApp):
                         if self.picker_label:
                             self.picker_label.delete()
                     except Exception:
+                        # Ignore errors when deleting picker_label; it may not exist or may already be deleted.
                         pass
                     self.picker_label = lvgl.label(self.p.content)
                     if self.picker_image:
