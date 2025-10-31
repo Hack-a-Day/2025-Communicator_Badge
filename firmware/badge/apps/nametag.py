@@ -190,8 +190,8 @@ class App(BaseApp):
                 # No images found, notify and return
                 try:
                     self.p.infobar_left.set_text("No headshots in images/headshots/")
-                except Exception:
-                    pass
+                except Exception as e:
+                    print("Nametag: failed to set infobar text:", e)
                 self.app_state = self.app_states.index("default")
             else:
                 # Start at current selection if present
