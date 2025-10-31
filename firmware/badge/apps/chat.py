@@ -233,7 +233,8 @@ class ChatApp(BaseApp):
                 self.topic_picker_active = True
 
         if self.auto_follow:
-            self.page.scroll_bottom()
+            if self.page:
+                self.page.scroll_bottom()
 
         self.refresh_counter = (
             self.refresh_counter + 1
