@@ -334,6 +334,7 @@ class App(BaseApp):
                         self.picker_label.delete()
                         self.picker_label = None
                 except Exception:
+                    # Ignore errors during cleanup; picker image/label may already be deleted or None.
                     pass
                 # Re-render the whole screen to reflect change
                 self.app_state = self.app_states.index("default")
