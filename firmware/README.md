@@ -17,7 +17,6 @@ The Communicator Badge is running Micropython, compiled with LVGL and ucryptogra
     - [Advanced: VS Code](#advanced-vs-code)
   - [Setting up your computer](#setting-up-your-computer)
   - [Setting up the repository](#setting-up-the-repository)
-  - [Syncing libraries](#syncing-libraries)
   - [Syncing to the badge](#syncing-to-the-badge)
   - [Developing new Apps and Protocols](#developing-new-apps-and-protocols)
   - [REPL and debugging on the badge](#repl-and-debugging-on-the-badge)
@@ -264,14 +263,6 @@ venv/Scripts/activate
 
 # You need to install Python packages into the virtual environment. You only need to do this once.
 pip install -r requirements.txt
-```
-
-## Syncing libraries
-
-The firmware uses a third party git repository. You can also add others. You need to run this operation once, or when new libraries are added. When it is done, you will see `badge/libs/crc` has been created.
-
-```bash
-scripts/sync_libs.py
 ```
 
 ## Syncing to the badge
