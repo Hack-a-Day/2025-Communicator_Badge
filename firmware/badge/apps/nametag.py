@@ -327,6 +327,7 @@ class App(BaseApp):
                     try:
                         self.p.infobar_left.set_text("Headshot set: " + self.headshot_files[self.headshot_index])
                     except Exception:
+                        # Ignore errors setting confirmation message to avoid interrupting user flow
                         pass
                 # Exit picker and rebuild main view
                 try:
