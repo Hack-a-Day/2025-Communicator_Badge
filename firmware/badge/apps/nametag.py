@@ -352,6 +352,7 @@ class App(BaseApp):
                         self.picker_label.delete()
                         self.picker_label = None
                 except Exception:
+                    # It is safe to ignore errors here, as the UI elements may already be deleted or not exist.
                     pass
                 # Restore default labels
                 try:
