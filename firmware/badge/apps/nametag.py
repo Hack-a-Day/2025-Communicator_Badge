@@ -314,7 +314,7 @@ class App(BaseApp):
                 if self.headshot_files:
                     chosen = self.image_dir + "/" + self.headshot_files[self.headshot_index]
                     try:
-                        self.badge.config.set("nametag_image", chosen)
+                        self.badge.config.set("nametag_image", chosen.encode())
                         self.badge.config.set("nametag_show_image", b"1")
                         self.badge.config.flush()
                     except Exception as e:
