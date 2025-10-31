@@ -210,6 +210,7 @@ class App(BaseApp):
                         self.headshot.delete()
                         self.headshot = None
                 except Exception:
+                    # Ignore errors during headshot widget deletion (e.g., already deleted or not initialized)
                     pass
                 try:
                     if self.name_label:
