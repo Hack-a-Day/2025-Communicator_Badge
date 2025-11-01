@@ -55,15 +55,26 @@ class ChatApp(BaseApp):
         except ValueError:
             self.chat_ttl = 2
 
-    def _update_channel_messages(self):
+    def _update_channel_messages(self, seek = None):
         if not self.channel_messages_updated:
             return
         messages = self.channels.get(self.active_channel)
+        while seek and not messages and self.active_topic < 99 and self.active_topic > 1:
+            self.active_topic += seek
+            self.active_channel = self.active_freq * 100 + self.active_topic
+            messages = self.channels.get(self.active_channel)
+        self.page.infobar_left.set_text(f"Channel: {self.active_freq:02d}:{self.active_topic:02d}    {MY_ADDRESS:x} : {self.my_alias}")
+
         if not messages:
+            # clear the display
+            self.page.populate_message_rows([])
             return
         display_messages = []
         for message in messages:
-            source = f"{message.source_addr:x}:{message.source_alias}"
+            if(message.source_alias and message.source_alias != ''):
+                source = f"{message.source_alias}"
+            else:
+                source = f"{message.source_addr:x}"
             display_messages.append((source, message.text))
         self.page.populate_message_rows(display_messages)
         self.channel_messages_updated = False
@@ -116,6 +127,7 @@ class ChatApp(BaseApp):
             messages=[],
         )
         self.page.add_message_rows(1, left_width=80)
+        self.channel_messages_updated = True
         self._update_channel_messages()
         self.page.replace_screen()
 
@@ -188,6 +200,7 @@ class ChatApp(BaseApp):
                         self.active_topic = max(1, min(99, int(new_topic_str)))
                         self.active_channel = self.active_freq * 100 + self.active_topic
                         self.page.infobar_left.set_text(f"Channel: {self.active_freq:02d}:{self.active_topic:02d}    {MY_ADDRESS:x} : {self.my_alias}")
+                        self.channel_messages_updated = True
                         self._update_channel_messages()
                     except ValueError as err:
                         print(f"Unable to set topic: {err}. Must be [1-99]")
@@ -207,6 +220,17 @@ class ChatApp(BaseApp):
             elif key == self.badge.keyboard.DOWN:
                 self.page.scroll_down(scroll_amount)
                 self.auto_follow = False
+            elif key == self.badge.keyboard.LEFT:
+                self.active_topic = max(1, min(99, int(self.active_topic - 1)))
+                self.active_channel = self.active_freq * 100 + self.active_topic
+                self.channel_messages_updated = True
+                self._update_channel_messages(seek = -1)
+            elif key == self.badge.keyboard.RIGHT:
+                self.active_topic = max(1, min(99, int(self.active_topic + 1)))
+                self.active_channel = self.active_freq * 100 + self.active_topic
+                self.channel_messages_updated = True
+                self._update_channel_messages(seek = 1)
+
             if self.badge.keyboard.f2():
                 self.auto_follow = True
 
