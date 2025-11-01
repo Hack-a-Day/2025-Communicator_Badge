@@ -8,6 +8,8 @@ from net.protocols import Protocol, NetworkFrame
 from ui.page import Page
 import ui.styles as styles
 import lvgl
+import os
+from ui import graphics
 
 """
 All protocols must be defined in their apps with unique ports. Ports must fit in uint8.
@@ -32,6 +34,15 @@ class App(BaseApp):
         # self.foreground_sleep_ms = 10
         # self.background_sleep_ms = 1000
         self.username = self.badge.config.get("nametag").decode().strip()
+        # Nametag image configuration
+        try:
+            self.show_image = self.badge.config.get("nametag_show_image").decode().strip() in ("true", "True")
+        except Exception:
+            self.show_image = False
+        try:
+            self.image_path = self.badge.config.get("nametag_image").decode().strip()
+        except Exception:
+            self.image_path = "images/headshots/wrencher.png"
         self.font = (
             lvgl.font_montserrat_42
         )  ## LVGL font object -- get more below or define your own
@@ -40,6 +51,12 @@ class App(BaseApp):
             "Monserrat ": lvgl.font_montserrat_42,
             "Monserrat 28": lvgl.font_montserrat_28,
         }
+        # Image picker state
+        self.image_dir = "images/headshots"
+        self.headshot_files = []
+        self.headshot_index = 0
+        self.picker_image = None
+        self.picker_label = None
         ## Small state machine to handle button presses in the app
         self.app_states = [
             "default",
@@ -49,6 +66,8 @@ class App(BaseApp):
             "in_fullscreen",
             "enter_pick_font",
             "in_pick_font",
+            "enter_pick_image",
+            "in_pick_image",
         ]
         self.app_state = 0
 
@@ -73,7 +92,7 @@ class App(BaseApp):
             if self.badge.keyboard.f1():
                 self.app_state = self.app_states.index("enter_add_username")
             if self.badge.keyboard.f2():
-                self.app_state = self.app_states.index("enter_pick_font")
+                self.app_state = self.app_states.index("enter_pick_image")
             if self.badge.keyboard.f3():
                 self.app_state = self.app_states.index("enter_fullscreen")
             if self.badge.keyboard.f4():
@@ -99,6 +118,9 @@ class App(BaseApp):
                 self.p.close_text_box()
                 self.p.set_menubar_button_label(4, "Home")
                 self.app_state = self.app_states.index("default")
+                # Re-render the main view so the updated name appears immediately
+                self.switch_to_foreground()
+                return
 
         if self.app_states[self.app_state] == "enter_fullscreen":
             ## overlay
@@ -109,10 +131,25 @@ class App(BaseApp):
             self.fullscreen.add_style(styles.base_style, lvgl.STATE.DEFAULT)
             self.fullscreen.set_width(lvgl.pct(100))
             self.fullscreen.set_height(lvgl.pct(100))
-            nametag = lvgl.label(self.fullscreen)
-            nametag.set_style_text_font(self.font, lvgl.STATE.DEFAULT)
-            nametag.align(lvgl.ALIGN.CENTER, 0, 0)
-            nametag.set_text(self.username)
+
+            # Build fullscreen content: image on the left, name on the right (no scaling)
+            fs_headshot = None
+            if self.show_image and self.image_path:
+                try:
+                    fs_headshot = graphics.create_image(self.image_path, self.fullscreen)
+                    fs_headshot.set_style_radius(40, 0)
+                    fs_headshot.align(lvgl.ALIGN.LEFT_MID, 10, 0)
+                except Exception as e:
+                    print("Nametag FS image load failed:", e)
+                    fs_headshot = None
+
+            fs_label = lvgl.label(self.fullscreen)
+            fs_label.set_style_text_font(self.font, lvgl.STATE.DEFAULT)
+            if fs_headshot:
+                fs_label.align_to(fs_headshot, lvgl.ALIGN.OUT_RIGHT_MID, 10, 0)
+            else:
+                fs_label.align(lvgl.ALIGN.CENTER, 0, 0)
+            fs_label.set_text(self.username)
 
             self.app_state = self.app_states.index("in_fullscreen")
 
@@ -138,6 +175,207 @@ class App(BaseApp):
             """keys up down enter, any fn key"""
             self.app_state = self.app_states.index("default")
 
+        # Enter image picker: list images/headshots/*.png and show preview with filename
+        if self.app_states[self.app_state] == "enter_pick_image":
+            try:
+                files = []
+                for fname in os.listdir(self.image_dir):
+                    fn_lower = fname.lower()
+                    if fn_lower.endswith(".png"):
+                        files.append(fname)
+                files.sort()
+                self.headshot_files = files
+            except Exception as e:
+                print("Nametag: listdir failed:", e)
+                self.headshot_files = []
+
+            if not self.headshot_files:
+                # No images found, notify and return
+                try:
+                    self.p.infobar_left.set_text("No headshots in images/headshots/")
+                except Exception as e:
+                    print("Nametag: failed to set infobar text:", e)
+                self.app_state = self.app_states.index("default")
+            else:
+                # Start at current selection if present
+                try:
+                    current_basename = self.image_path.split("/")[-1]
+                    if current_basename in self.headshot_files:
+                        self.headshot_index = self.headshot_files.index(current_basename)
+                    else:
+                        self.headshot_index = 0
+                except Exception:
+                    self.headshot_index = 0
+
+                # Clear current content widgets
+                try:
+                    if self.headshot:
+                        self.headshot.delete()
+                        self.headshot = None
+                except Exception:
+                    # Ignore errors during headshot widget deletion (e.g., already deleted or not initialized)
+                    pass
+                try:
+                    if self.name_label:
+                        self.name_label.delete()
+                        self.name_label = None
+                except Exception:
+                    # It is safe to ignore errors when deleting the name label, as it may not exist or may have already been deleted.
+                    pass
+
+                # Build picker preview
+                try:
+                    fullpath = self.image_dir + "/" + self.headshot_files[self.headshot_index]
+                    self.picker_image = graphics.create_image(fullpath, self.p.content)
+                    self.picker_image.set_style_radius(40, 0)
+                    self.picker_image.align(lvgl.ALIGN.LEFT_MID, 10, 0)
+                except Exception as e:
+                    print("Nametag: picker image load failed:", e)
+                    self.picker_image = None
+
+                self.picker_label = lvgl.label(self.p.content)
+                label_text = self.headshot_files[self.headshot_index]
+                if self.picker_image:
+                    self.picker_label.align_to(self.picker_image, lvgl.ALIGN.OUT_RIGHT_MID, 10, 0)
+                else:
+                    self.picker_label.align(lvgl.ALIGN.CENTER, 0, 0)
+                self.picker_label.set_text(label_text)
+
+                # Update menubar for picker controls: F1 Select, F3 Prev, F4 Next, F5 Cancel
+                try:
+                    self.p.set_menubar_button_label(0, "Select")
+                    self.p.set_menubar_button_label(1, "")
+                    self.p.set_menubar_button_label(2, "Prev")
+                    self.p.set_menubar_button_label(3, "Next")
+                    self.p.set_menubar_button_label(4, "Cancel")
+                except Exception:
+                    # Ignore errors when setting menubar button labels; non-critical UI update.
+                    pass
+                self.app_state = self.app_states.index("in_pick_image")
+
+        # Handle image picker navigation and selection
+        if self.app_states[self.app_state] == "in_pick_image":
+            # Prev (F3)
+            if self.badge.keyboard.f3():
+                if self.headshot_files:
+                    self.headshot_index = (self.headshot_index - 1) % len(self.headshot_files)
+                    # Refresh preview
+                    try:
+                        if self.picker_image:
+                            self.picker_image.delete()
+                    except Exception:
+                        # Ignore errors when deleting picker image; image may not exist or may already be deleted.
+                        pass
+                    fullpath = self.image_dir + "/" + self.headshot_files[self.headshot_index]
+                    try:
+                        self.picker_image = graphics.create_image(fullpath, self.p.content)
+                        self.picker_image.set_style_radius(40, 0)
+                        self.picker_image.align(lvgl.ALIGN.LEFT_MID, 10, 0)
+                    except Exception as e:
+                        print("Nametag: picker image load failed:", e)
+                        self.picker_image = None
+                    try:
+                        if self.picker_label:
+                            self.picker_label.delete()
+                    except Exception:
+                        # Ignore errors if label deletion fails (e.g., label already deleted or not present)
+                        pass
+                    self.picker_label = lvgl.label(self.p.content)
+                    if self.picker_image:
+                        self.picker_label.align_to(self.picker_image, lvgl.ALIGN.OUT_RIGHT_MID, 10, 0)
+                    else:
+                        self.picker_label.align(lvgl.ALIGN.CENTER, 0, 0)
+                    self.picker_label.set_text(self.headshot_files[self.headshot_index])
+
+            # Next (F4)
+            if self.badge.keyboard.f4():
+                if self.headshot_files:
+                    self.headshot_index = (self.headshot_index + 1) % len(self.headshot_files)
+                    # Refresh preview
+                    try:
+                        if self.picker_image:
+                            self.picker_image.delete()
+                    except Exception as e:
+                        print("Nametag: failed to delete picker_image:", e)
+                    fullpath = self.image_dir + "/" + self.headshot_files[self.headshot_index]
+                    try:
+                        self.picker_image = graphics.create_image(fullpath, self.p.content)
+                        self.picker_image.set_style_radius(40, 0)
+                        self.picker_image.align(lvgl.ALIGN.LEFT_MID, 10, 0)
+                    except Exception as e:
+                        print("Nametag: picker image load failed:", e)
+                        self.picker_image = None
+                    try:
+                        if self.picker_label:
+                            self.picker_label.delete()
+                    except Exception:
+                        # Ignore errors when deleting picker_label; it may not exist or may already be deleted.
+                        pass
+                    self.picker_label = lvgl.label(self.p.content)
+                    if self.picker_image:
+                        self.picker_label.align_to(self.picker_image, lvgl.ALIGN.OUT_RIGHT_MID, 10, 0)
+                    else:
+                        self.picker_label.align(lvgl.ALIGN.CENTER, 0, 0)
+                    self.picker_label.set_text(self.headshot_files[self.headshot_index])
+
+            # Select (F1)
+            if self.badge.keyboard.f1():
+                if self.headshot_files:
+                    chosen = self.image_dir + "/" + self.headshot_files[self.headshot_index]
+                    try:
+                        self.badge.config.set("nametag_image", chosen.encode())
+                        self.badge.config.set("nametag_show_image", b"true")
+                        self.badge.config.flush()
+                    except Exception as e:
+                        print("Nametag: failed to save config:", e)
+                    # Small confirmation
+                    try:
+                        self.p.infobar_left.set_text("Headshot set: " + self.headshot_files[self.headshot_index])
+                    except Exception:
+                        # Ignore errors setting confirmation message to avoid interrupting user flow
+                        pass
+                # Exit picker and rebuild main view
+                try:
+                    if self.picker_image:
+                        self.picker_image.delete()
+                        self.picker_image = None
+                    if self.picker_label:
+                        self.picker_label.delete()
+                        self.picker_label = None
+                except Exception:
+                    # Ignore errors during cleanup; picker image/label may already be deleted or None.
+                    pass
+                # Re-render the whole screen to reflect change
+                self.app_state = self.app_states.index("default")
+                self.switch_to_foreground()
+                return
+
+            # Cancel/Back (F5)
+            if self.badge.keyboard.f5():
+                try:
+                    if self.picker_image:
+                        self.picker_image.delete()
+                        self.picker_image = None
+                    if self.picker_label:
+                        self.picker_label.delete()
+                        self.picker_label = None
+                except Exception:
+                    # It is safe to ignore errors here, as the UI elements may already be deleted or not exist.
+                    pass
+                # Restore default labels
+                try:
+                    self.p.set_menubar_button_label(0, "Name")
+                    self.p.set_menubar_button_label(1, "Pick Img")
+                    self.p.set_menubar_button_label(2, "Fullscreen")
+                    self.p.set_menubar_button_label(3, "")
+                    self.p.set_menubar_button_label(4, "Home")
+                except Exception:
+                    pass
+                self.app_state = self.app_states.index("default")
+                # Rebuild main content
+                self.switch_to_foreground()
+                return
+
     def run_background(self):
         """App behavior when running in the background.
         You do not need to loop here, and the app will sleep for at least self.background_sleep_ms milliseconds between calls.
@@ -157,9 +395,41 @@ class App(BaseApp):
         ## Note this order is important: it renders top to bottom that the "content" section expands to fill empty space
         ## If you want to go fully clean-slate, you can draw straight onto the p.scr object, which should fit the full screen.
         self.username = self.badge.config.get("nametag").decode().strip()
+        # Refresh image config on entry
+        try:
+            self.show_image = self.badge.config.get("nametag_show_image").decode().strip() in ("1", "true", "True")
+        except Exception:
+            self.show_image = False
+        try:
+            self.image_path = self.badge.config.get("nametag_image").decode().strip()
+        except Exception:
+            self.image_path = "images/headshots/wrencher.png"
         self.p.create_infobar([f"Hello, My Name Is: {self.username}", "Nametag App"])
         self.p.create_content()
-        self.p.create_menubar(["Name", "", "Fullscreen", "", "Home"])
+        self.p.create_menubar(["Name", "Pick Img", "Fullscreen", "", "Home"])
+        # Build content: image on the left (rounded), name label to the right. No scaling.
+        self.name_label = None
+        self.headshot = None
+        try:
+            if self.show_image and self.image_path:
+                self.headshot = graphics.create_image(self.image_path, self.p.content)
+                # Mimic Talks app styling: rounded corners (circle at 100x100)
+                self.headshot.set_style_radius(40, 0)
+                self.headshot.align(lvgl.ALIGN.LEFT_MID, 10, 0)
+        except Exception as e:
+            # If image cannot be loaded, fall back to text-only
+            print("Nametag image load failed:", e)
+            self.headshot = None
+        # Create the name label
+        self.name_label = lvgl.label(self.p.content)
+        self.name_label.set_style_text_font(self.font, lvgl.STATE.DEFAULT)
+        if self.headshot:
+            # Place the text to the right of the image, vertically centered
+            self.name_label.align_to(self.headshot, lvgl.ALIGN.OUT_RIGHT_MID, 10, 0)
+        else:
+            # Center text if no image
+            self.name_label.align(lvgl.ALIGN.CENTER, 0, 0)
+        self.name_label.set_text(self.username)
         self.p.replace_screen()
 
     def switch_to_background(self):
