@@ -72,6 +72,13 @@ BOARD_BG_COLOR = lvgl.color_hex(0x0B1018)
 EMPTY_CELL_COLOR = lvgl.color_hex(0x1E2C40)
 ACTIVE_CELL_COLOR = lvgl.color_hex(0xF4F8FB)
 
+APP_NAME = "mcblockface"
+
+PREVIEW_GRID_SIZE = 6
+
+MILLISECONDS_PER_UPDATE = 16
+BASE_SCORE = {1: 40, 2: 100, 3: 300, 4: 1200}
+
 PIECE_COLORS = (
     lvgl.color_hex(0xF68C1E),  # L - orange
     lvgl.color_hex(0x1E3A8A),  # J - darker blue
@@ -104,27 +111,34 @@ def _get_obj_flag(name):
 
 
 def _set_scrollbar_off(widget):
-    """Disable scrollbars on a widget across LVGL versions."""
-    mode_off = None
-    mode_group = getattr(lvgl, "SCROLLBAR_MODE", None)
-    if mode_group:
-        mode_off = getattr(mode_group, "OFF", None)
-    if mode_off is None:
-        enum = getattr(lvgl, "scrollbar_mode_t", None)
-        if enum:
-            mode_off = getattr(enum, "OFF", None)
-    if mode_off is None:
-        mode_off = getattr(lvgl, "SCROLLBAR_MODE_OFF", None)
-    if mode_off is None:
-        return
-    setter = getattr(widget, "set_scrollbar_mode", None)
-    if setter:
-        setter(mode_off)
+    widget.set_scrollbar_mode(lvgl.SCROLLBAR_MODE.OFF)
+
+
+def _resolve_asset_path(filename: str) -> str | None:
+    """Locate an asset packaged with the app."""
+    base_dir = __file__
+    if "/" in base_dir:
+        base_dir = base_dir.rsplit("/", 1)[0]
     else:
+        base_dir = ""
+
+    candidates = []
+    if base_dir:
+        candidates.append(f"{base_dir}/{filename}")
+    candidates.extend(
+        [
+            f"user_apps/{APP_NAME}/{filename}",
+            f"apps/{APP_NAME}/{filename}",
+            filename,
+        ]
+    )
+    for candidate in candidates:
         try:
-            lvgl.obj_set_scrollbar_mode(widget, mode_off)
-        except AttributeError:
-            pass
+            with open(candidate, "rb"):
+                return candidate
+        except OSError:
+            continue
+    return None
 
 
 def _calc_occupation(piece, x, y, rotation):
@@ -218,6 +232,15 @@ class App(BaseApp):
         self.score_label = None
         self._input_task = None
         self._render_cache = []
+        self.splash_container = None
+        self.splash_image = None
+        self.splash_hint = None
+        self.splash_visible = False
+        self.next_container = None
+        self.next_cells = []
+        self.lines_label = None
+        self.level_label = None
+        self.score_value_label = None
 
         self.foreground_sleep_ms = 4
         self.background_sleep_ms = 600
@@ -286,14 +309,8 @@ class App(BaseApp):
             self.board_container.set_layout(layout_off)
         _set_scrollbar_off(self.board_container)
         scroll_flag = _get_obj_flag("SCROLLABLE")
-        if scroll_flag is not None:
-            if hasattr(self.board_container, "clear_flag"):
-                self.board_container.clear_flag(scroll_flag)
-            else:
-                try:
-                    lvgl.obj_clear_flag(self.board_container, scroll_flag)
-                except AttributeError:
-                    pass
+        if scroll_flag is not None and hasattr(self.board_container, "clear_flag"):
+            self.board_container.clear_flag(scroll_flag)
         self.board_container.set_style_pad_all(0, 0)
         self.board_container.set_style_border_width(0, 0)
         self.board_container.set_style_bg_color(BOARD_BG_COLOR, 0)
@@ -324,58 +341,119 @@ class App(BaseApp):
                 cell.set_style_bg_color(EMPTY_CELL_COLOR, 0)
                 cell.set_style_bg_opa(lvgl.OPA.COVER, 0)
                 _set_scrollbar_off(cell)
-                if scroll_flag is not None:
-                    if hasattr(cell, "clear_flag"):
-                        cell.clear_flag(scroll_flag)
-                    else:
-                        try:
-                            lvgl.obj_clear_flag(cell, scroll_flag)
-                        except AttributeError:
-                            pass
+                if scroll_flag is not None and hasattr(cell, "clear_flag"):
+                    cell.clear_flag(scroll_flag)
                 row.append(cell)
             self.board_cells.append(row)
         self._render_cache = [[None for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
 
-        self.score_label = lvgl.label(self.page.content)
-        self.score_label.add_style(styles.content_style, 0)
-        _set_scrollbar_off(self.score_label)
-        if hasattr(self.score_label, "align"):
-            self.score_label.align(lvgl.ALIGN.TOP_LEFT, 4, 4)
-        else:
-            try:
-                lvgl.obj_align(self.score_label, lvgl.ALIGN.TOP_LEFT, 4, 4)
-            except AttributeError:
-                pass
+        preview_width = PREVIEW_GRID_SIZE * CELL_SIZE
+        preview_height = PREVIEW_GRID_SIZE * CELL_SIZE + 16
+        self.next_container = lvgl.obj(self.page.content)
+        self.next_container.set_size(preview_width, preview_height)
+        self.next_container.set_style_pad_all(0, 0)
+        self.next_container.set_style_border_width(0, 0)
+        self.next_container.set_style_bg_color(BOARD_BG_COLOR, 0)
+        self.next_container.set_style_bg_opa(lvgl.OPA.COVER, 0)
+        _set_scrollbar_off(self.next_container)
+        next_x = BOARD_VERTICAL_OFFSET - preview_width - 12
+        next_y = BOARD_HORIZONTAL_MARGIN + (BOARD_WIDTH * CELL_SIZE - preview_height) // 2
+        if next_x < 0:
+            next_x = 0
+        if next_y < 0:
+            next_y = 0
+        self.next_container.set_pos(next_x, next_y)
+
+        title = lvgl.label(self.next_container)
+        title.set_text("Next")
+        _set_scrollbar_off(title)
+        title.align(lvgl.ALIGN.TOP_MID, 0, 0)
+
+        grid_start_y = 20
+        self.next_cells = []
+        for row_idx in range(PREVIEW_GRID_SIZE):
+            row_cells = []
+            for col_idx in range(PREVIEW_GRID_SIZE):
+                cell = lvgl.obj(self.next_container)
+                cell.set_size(CELL_SIZE, CELL_SIZE)
+                cell.set_style_pad_all(0, 0)
+                cell.set_style_border_width(0, 0)
+                cell.set_style_radius(0, 0)
+                cell.set_style_bg_color(EMPTY_CELL_COLOR, 0)
+                cell.set_style_bg_opa(lvgl.OPA.COVER, 0)
+                _set_scrollbar_off(cell)
+                cell.set_pos(col_idx * CELL_SIZE, grid_start_y + row_idx * CELL_SIZE)
+                row_cells.append(cell)
+            self.next_cells.append(row_cells)
+
+        self._refresh_next_preview()
+
+        self.lines_label = lvgl.label(self.page.content)
+        self.lines_label.add_style(styles.content_style, 0)
+        self.lines_label.set_style_text_font(lvgl.font_montserrat_16, 0)
+        self.lines_label.set_style_text_color(lvgl.color_hex(0xFFFFFF), 0)
+        _set_scrollbar_off(self.lines_label)
+        self.lines_label.set_text("Lines")
+        _center = BOARD_HORIZONTAL_MARGIN + (BOARD_WIDTH * CELL_SIZE) // 2
+        self.lines_label.align(lvgl.ALIGN.LEFT_MID, 12, _center - 8)
+
+        self.level_label = lvgl.label(self.page.content)
+        self.level_label.add_style(styles.content_style, 0)
+        self.level_label.set_style_text_font(lvgl.font_montserrat_16, 0)
+        self.level_label.set_style_text_color(lvgl.color_hex(0xFFFFFF), 0)
+        _set_scrollbar_off(self.level_label)
+        self.level_label.align(lvgl.ALIGN.TOP_LEFT, 8, 6)
+
+        self.score_value_label = lvgl.label(self.page.content)
+        self.score_value_label.add_style(styles.content_style, 0)
+        self.score_value_label.set_style_text_font(lvgl.font_montserrat_16, 0)
+        self.score_value_label.set_style_text_color(lvgl.color_hex(0xF4F8FB), 0)
+        _set_scrollbar_off(self.score_value_label)
+        self.score_value_label.align(lvgl.ALIGN.RIGHT_MID, -8, 0)
 
         self.status_label = lvgl.label(self.page.content)
         self.status_label.add_style(styles.content_style, 0)
         _set_scrollbar_off(self.status_label)
-        if hasattr(self.status_label, "align"):
-            self.status_label.align(lvgl.ALIGN.BOTTOM_LEFT, 4, -4)
-        else:
-            try:
-                lvgl.obj_align(self.status_label, lvgl.ALIGN.BOTTOM_LEFT, 4, -4)
-            except AttributeError:
-                pass
+        self.status_label.align(lvgl.ALIGN.BOTTOM_LEFT, 4, -4)
 
         self.page.replace_screen()
-        self._update_infobar()
+        self._show_splash()
+        self._update_labels()
         self.board_dirty = True
         self._refresh_board()
         self._start_input_loop()
 
     def _teardown_ui(self):
         self._stop_input_loop()
-        if self.page:
-            self.page.delete()
-        self.page = None
-        if self.board_container:
-            self.board_container.delete()
+        splash = self.splash_container
+        board = self.board_container
+        nxt = getattr(self, "next_container", None)
+        page = self.page
+        score_info = self.score_label
+        status = self.status_label
+        lines = self.lines_label
+        level = self.level_label
+        score_value = self.score_value_label
+        self.splash_container = None
         self.board_container = None
+        self.next_container = None
+        self.page = None
         self.board_cells = []
+        self.next_cells = []
         self.score_label = None
         self.status_label = None
+        self.lines_label = None
+        self.level_label = None
+        self.score_value_label = None
         self._render_cache = []
+        for obj in (splash, board, nxt, score_info, status, lines, level, score_value, page):
+            if not obj:
+                continue
+            try:
+                obj.delete()
+            except (AttributeError, getattr(lvgl, "LvReferenceError", Exception)):
+                pass
+        self.lines_style = None
 
     def _start_input_loop(self):
         if self._input_task:
@@ -387,16 +465,53 @@ class App(BaseApp):
         if not task:
             return
         self._input_task = None
+        current = None
+        get_current = getattr(aio, "current_task", None)
+        if callable(get_current):
+            try:
+                current = get_current()
+            except Exception:
+                current = None
+        if task is current:
+            return
         try:
             task.cancel()
         except AttributeError:
             pass
 
+    def _resume_main_menu(self):
+        """Bring the main AppMenu back to the foreground so the UI recovers immediately."""
+        target = None
+        try:
+            from apps.app_menu import AppMenu  # type: ignore
+        except ImportError:
+            AppMenu = None  # type: ignore
+        for app in BaseApp.all_apps:
+            if AppMenu and isinstance(app, AppMenu) and getattr(app, "main", False):
+                target = app
+                break
+        if target is None:
+            for app in BaseApp.all_apps:
+                if getattr(app, "name", "").lower() == "main":
+                    target = app
+                    break
+        if target:
+            try:
+                target.switch_to_foreground()
+            except Exception:
+                pass
+
     def _exit_to_background(self):
         if not self.active_foreground:
             return
-        self.badge.display.clear()
+        if hasattr(self.badge.keyboard, "escape_pressed"):
+            self.badge.keyboard.escape_pressed = False
+        try:
+            self.badge.display.clear()
+        except AttributeError:
+            pass
         self.switch_to_background()
+        self._resume_main_menu()
 
     def _handle_key_press(self, key):
         if key in (".", ">", self.badge.keyboard.LEFT):
@@ -419,6 +534,9 @@ class App(BaseApp):
                     self.start_new_game()
                     await aio.sleep_ms(0)
                     continue
+                if getattr(self.badge.keyboard, "escape_pressed", False):
+                    self._exit_to_background()
+                    break
                 if self.badge.keyboard.f5():
                     self._exit_to_background()
                     break
@@ -437,12 +555,87 @@ class App(BaseApp):
         if self.status_label:
             self.status_label.set_text(message)
 
-    def _update_infobar(self):
-        if self.score_label:
-            self.score_label.set_text(f"L{self.lines_cleared} Lv{self.level}")
+    def _show_splash(self):
+        if self.splash_visible or not self.page:
+            return
+        self.splash_container = lvgl.obj(self.page.content)
+        self.splash_container.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
+        self.splash_container.set_style_bg_color(BOARD_BG_COLOR, 0)
+        self.splash_container.set_style_bg_opa(lvgl.OPA.COVER, 0)
+        self.splash_container.set_style_border_width(0, 0)
+        _set_scrollbar_off(self.splash_container)
+        self.splash_container.align(lvgl.ALIGN.CENTER, 0, 0)
+        self.splash_container.move_foreground()
+
+        self.splash_image = None
+        self.splash_hint = lvgl.label(self.splash_container)
+        self.splash_hint.add_style(styles.content_style, 0)
+        self.splash_hint.set_style_text_font(lvgl.font_montserrat_16, 0)
+        self.splash_hint.set_style_text_color(lvgl.color_hex(0xFFFFFF), 0)
+        self.splash_hint.set_text("  BlockyBlock\n    McBlockFace\n\n[F1] start")
+        self.splash_hint.align(lvgl.ALIGN.CENTER, 0, 0)
+
+        # Flush queued keys so the menu selection F1 doesn't immediately start a game.
+        self.badge.keyboard.read_key()
+        self.badge.keyboard.f1()
+
+        self.splash_visible = True
+
+    def _hide_splash(self):
+        if not self.splash_visible:
+            return
+        self.splash_visible = False
+        if self.splash_container:
+            self.splash_container.delete()
+        self.splash_container = None
+        self.splash_image = None
+        self.splash_hint = None
+
+    def _update_labels(self):
+        if self.lines_label:
+            self.lines_label.set_text(f"L\nI\nN\nE\nS\n\n{self.lines_cleared}")
+        if self.level_label:
+            self.level_label.set_text(f"Level\n{self.level}")
+        if self.score_value_label:
+            self.score_value_label.set_text(f"Score\n{self.score}")
+
+    def _refresh_next_preview(self):
+        if not self.next_cells:
+            return
+        for row in self.next_cells:
+            for cell in row:
+                cell.set_style_bg_color(EMPTY_CELL_COLOR, 0)
+        piece = self.next_piece
+        if piece is None:
+            return
+        coords = _calc_occupation(piece, 1, 1, 0)
+        if not coords:
+            return
+        min_x = min(x for x, _ in coords)
+        min_y = min(y for _, y in coords)
+        normalized = [(x - min_x, y - min_y) for x, y in coords]
+        max_x = max(x for x, _ in normalized)
+        max_y = max(y for _, y in normalized)
+        width = max_x + 1
+        height = max_y + 1
+        offset_x = (PREVIEW_GRID_SIZE - width) // 2
+        offset_y = (PREVIEW_GRID_SIZE - height) // 2
+        color = PIECE_COLORS[piece]
+        for x, y in normalized:
+            col = x + offset_x
+            row = y + offset_y
+            if 0 <= row < PREVIEW_GRID_SIZE and 0 <= col < PREVIEW_GRID_SIZE:
+                self.next_cells[row][col].set_style_bg_color(color, 0)
 
     def _refresh_board(self):
         if not self.board_dirty:
+            return
+        if not self.active_foreground:
+            self.board_dirty = False
+            return
+        if not self.board_container or not self.board_cells:
+            # UI torn down; nothing to refresh
+            self.board_dirty = False
             return
         if self.board:
             grid = [row[:] for row in self.board]
@@ -478,6 +671,7 @@ class App(BaseApp):
     # Game logic
 
     def start_new_game(self):
+        self._hide_splash()
         self.board = [[EMPTY_SENTINEL for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
         self.lines_cleared = 0
         self.level = 1
@@ -495,11 +689,12 @@ class App(BaseApp):
         self.last_gravity_ms = now
         self.last_rotate_ms = now
         self.board_dirty = True
-        self._update_infobar()
+        self._update_labels()
         if not self._can_place(self.active_cells):
             self._trigger_game_over()
         else:
             self._set_status("Game on! .← 5→ 2↓ 7⟲ 8⟳")
+        self._refresh_next_preview()
 
     def update(self, now):
         if self.state == "idle" or self.state == "game_over":
@@ -639,18 +834,20 @@ class App(BaseApp):
         for row in sorted(self.lines_pending, reverse=True):
             del self.board[row]
             self.board.insert(0, [EMPTY_SENTINEL for _ in range(BOARD_WIDTH)])
+        self.lines_pending = []
         self.lines_cleared += cleared
         self.level = 1 + self.lines_cleared // 10
-        self.score += cleared * 100 * self.level
-        self.lines_pending = []
+        base_score = BASE_SCORE.get(cleared, 0)
+        self.score += base_score * (self.level + 1)
         self.board_dirty = True
         self._render_cache = []
-        self._update_infobar()
+        self._update_labels()
         self._set_status(f"Cleared {cleared} line(s)! Score {self.score}")
 
     def _spawn_next_piece(self):
         self.current_piece = self.next_piece
         self.next_piece = _rand_piece()
+        self._refresh_next_preview()
         self.piece_x = 4
         self.piece_y = 0
         self.piece_rot = 0
