@@ -104,9 +104,9 @@ class Keyboard:
         self._f5 = FN_UNPRESSED
 
         # Create I2C Bus for keyboard.
-        # Use standard (low) frequency because we don't need to send that much data, and it gives us more
-        # signal margin.
-        i2c = I2C(sda=board.KBD_SDA, scl=board.KBD_SCL, freq=100000)
+        # Use controller 1 so we stay separate from the SAO header bus.
+        # Keep the frequency modest for extra signal margin.
+        i2c = I2C(1, scl=board.KBD_SCL, sda=board.KBD_SDA, freq=100000)
         self.rst = board.KBD_RST
         # Reset chip before initializing
         self.rst.value(0)
