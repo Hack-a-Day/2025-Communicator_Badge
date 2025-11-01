@@ -9,6 +9,10 @@
 ## in firmware directory
 git clone https://github.com/lvgl-micropython/lvgl_micropython
 cd lvgl_micropython
+
+## You'll want to modify your lv_conf.h to enable LV_FONT_MONTSERRAT_28, LV_FONT_MONTSERRAT_42, and LV_FONT_MONTSERRAT_48 in addition to the fonts enabled by default.
+vim lib/lv_conf.h
+
 #  our board will be N16R8 : 16 megs quad flash, 8 megs octal spi psram 
 python3 make.py esp32 BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT --flash-size=16 DISPLAY=nv3007 --enable-uart-repl=y --enable-cdc-repl=n 
 
@@ -43,7 +47,7 @@ ls build
 git clone https://github.com/dmazzella/ucryptography.git ../ucryptography
 pushd ../ucryptography && git submodule update --init --depth 1 && popd
 
-python3 make.py esp32 BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT --flash-size=16 DISPLAY=nv3007 --enable-uart-repl=y --enable-cdc-repl=n 
+python3 make.py esp32 BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT --flash-size=16 DISPLAY=nv3007 --enable-uart-repl=y --enable-cdc-repl=n USER_C_MODULE="$(pwd)/../ucryptography/micropython.cmake"
 
 ## flash it with esptool:
 # if it already has a micropython on it...  
