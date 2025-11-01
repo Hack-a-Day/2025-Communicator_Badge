@@ -104,7 +104,7 @@ class BadgeNet:
                     try:
                         message = NetworkFrame().set_frame(frame).validate_frame()
                         # print(f"Received frame {repr(message)}")
-                    except ValueError as err:
+                    except (ValueError, IndexError) as err:
                         print(f"Failed validation {repr(frame)}: {err}")
                         continue
 
