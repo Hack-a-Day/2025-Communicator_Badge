@@ -30,7 +30,7 @@ class ConfigManager(BaseApp):
             return
         key_stripped = key.strip(b"\0").decode()
         val_stripped = value.strip(b"\0")
-        self.badge.config, set(key_stripped, val_stripped)
+        self.badge.config.set(key_stripped, val_stripped)
         self.badge.config.flush()
         self._reload_config()
 
