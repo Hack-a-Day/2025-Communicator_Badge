@@ -1,3 +1,4 @@
+import asyncio
 import lvgl 
 import lcd_bus
 import nv3007
@@ -20,6 +21,12 @@ _WIDTH = const(142)
 _HEIGHT = const(428)
 _OFFSET_X = const(0)
 _OFFSET_Y = const(12)
+
+async def lvgl_task_handler(th):
+    while(True):
+        th._task_handler(None)
+
+        await asyncio.sleep(0.033)
 
 def lcd_init():
     ## this fails with "TypeError: can't convert module to int"
@@ -61,7 +68,15 @@ def lcd_init():
         
     ## Start up screen tasks and return screen object
     lvgl.task_handler()
-    task_handler.TaskHandler()
+    th = task_handler.TaskHandler()
+
+    ## So, LVGL uses micropython.schedule to schedule its task handler to run
+    ## periodically. It seems like this might not play nice with asyncio's
+    ## event loop, so we will disable LVGL's internal scheduling and run it
+    ## ourselves in an asyncio task.
+    th._timer.deinit()
+    asyncio.create_task(lvgl_task_handler(th))
+
     return lvgl.screen_active()
 
 
