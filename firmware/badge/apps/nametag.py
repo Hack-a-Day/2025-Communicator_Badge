@@ -146,7 +146,13 @@ class App(BaseApp):
             fs_label = lvgl.label(self.fullscreen)
             fs_label.set_style_text_font(self.font, lvgl.STATE.DEFAULT)
             if fs_headshot:
-                fs_label.align_to(fs_headshot, lvgl.ALIGN.OUT_RIGHT_MID, 10, 0)
+                numlines = self.username.count("\n") + 1
+                if numlines == 1:
+                    fs_label.align_to(fs_headshot, lvgl.ALIGN.OUT_RIGHT_MID, 10, 0)
+                elif numlines == 2:
+                    fs_label.align_to(fs_headshot, lvgl.ALIGN.OUT_RIGHT_MID, 10, -30)
+                else:
+                    fs_label.align_to(fs_headshot, lvgl.ALIGN.OUT_RIGHT_TOP, 10, -20)
             else:
                 fs_label.align(lvgl.ALIGN.CENTER, 0, 0)
             fs_label.set_text(self.username)
@@ -413,7 +419,6 @@ class App(BaseApp):
         try:
             if self.show_image and self.image_path:
                 self.headshot = graphics.create_image(self.image_path, self.p.content)
-                # Mimic Talks app styling: rounded corners (circle at 100x100)
                 self.headshot.set_style_radius(40, 0)
                 self.headshot.align(lvgl.ALIGN.LEFT_MID, 10, 0)
         except Exception as e:
@@ -424,8 +429,14 @@ class App(BaseApp):
         self.name_label = lvgl.label(self.p.content)
         self.name_label.set_style_text_font(self.font, lvgl.STATE.DEFAULT)
         if self.headshot:
-            # Place the text to the right of the image, vertically centered
-            self.name_label.align_to(self.headshot, lvgl.ALIGN.OUT_RIGHT_MID, 10, 0)
+            # figure out if the label is more than one line
+            numlines = self.username.count("\n") + 1
+            if numlines == 1:
+                self.name_label.align_to(self.headshot, lvgl.ALIGN.OUT_RIGHT_MID, 10, 0)
+            elif numlines == 2:
+                self.name_label.align_to(self.headshot, lvgl.ALIGN.OUT_RIGHT_MID, 10, -30)
+            else:
+                self.name_label.align_to(self.headshot, lvgl.ALIGN.OUT_RIGHT_TOP, 10, -20)
         else:
             # Center text if no image
             self.name_label.align(lvgl.ALIGN.CENTER, 0, 0)
