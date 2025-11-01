@@ -95,7 +95,7 @@ class Talks(BaseApp):
         if self.badge.keyboard.f3():
             if self.talk_index > 0:
                 self.talk_index = self.talk_index - 1
-            self.talk_changed = True
+                self.talk_changed = True
 
         if self.badge.keyboard.f4():
             if self.talk_index < (num_talks - 1):
