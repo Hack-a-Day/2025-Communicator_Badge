@@ -250,7 +250,7 @@ class App(BaseApp):
                 # Update menubar for picker controls: F1 Select, F3 Prev, F4 Next, F5 Cancel
                 try:
                     self.p.set_menubar_button_label(0, "Select")
-                    self.p.set_menubar_button_label(1, "")
+                    self.p.set_menubar_button_label(1, "Hide Img")
                     self.p.set_menubar_button_label(2, "Prev")
                     self.p.set_menubar_button_label(3, "Next")
                     self.p.set_menubar_button_label(4, "Cancel")
@@ -340,6 +340,29 @@ class App(BaseApp):
                     except Exception:
                         # Ignore errors setting confirmation message to avoid interrupting user flow
                         pass
+                # Exit picker and rebuild main view
+                try:
+                    if self.picker_image:
+                        self.picker_image.delete()
+                        self.picker_image = None
+                    if self.picker_label:
+                        self.picker_label.delete()
+                        self.picker_label = None
+                except Exception:
+                    # Ignore errors during cleanup; picker image/label may already be deleted or None.
+                    pass
+                # Re-render the whole screen to reflect change
+                self.app_state = self.app_states.index("default")
+                self.switch_to_foreground()
+                return
+
+            # Hide Img (F2)
+            if self.badge.keyboard.f2():
+                try:
+                    self.badge.config.set("nametag_show_image", b"false")
+                    self.badge.config.flush()
+                except Exception as e:
+                    print("Nametag: failed to save config:", e)
                 # Exit picker and rebuild main view
                 try:
                     if self.picker_image:
