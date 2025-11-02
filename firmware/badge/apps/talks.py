@@ -55,12 +55,27 @@ class Talks(BaseApp):
     def load_talks(self):
         # Load data from file
         # talks = []
+        interests_entries = []
+        try:
+            with open("schedule-interests.csv", "r") as schedule_interests:
+                interests_lines = schedule_interests.readlines()
+                for line in interests_lines:
+                    interests_entries.append(line.strip().split("$"))
+                print("Successfully processed 'schedule-interests.csv'.")
+        except:
+            print("Failed to open 'schedule-interests.csv'. Will auto-generate a new one.")
+        
         with open("schedule.csv", "r") as schedule:
             for line in schedule:
                 t_data = line.strip().split("$")
                 if len(t_data) == 7:
-                    t_data.append(INTEREST_LEVELS["UNKNOWN"])
-                if len(t_data) == 8:
+                    current_interest = INTEREST_LEVELS["UNKNOWN"]
+                    for entry in interests_entries:
+                        # Match / track interest by talk title. Worse case of title change, we have stale data and need to
+                        # add preference again but should not break things (fail gracefully).
+                        if entry[0] == t_data[3]:
+                            current_interest = entry[1]
+                            break
                     new_talk = talk(
                         t_data[0],
                         t_data[1],
@@ -69,7 +84,7 @@ class Talks(BaseApp):
                         t_data[4],
                         t_data[5],
                         t_data[6],
-                        t_data[7],
+                        current_interest,
                     )
                     self.talks.append(new_talk)
     
@@ -85,11 +100,11 @@ class Talks(BaseApp):
                     talk.interest = interest
     
     
-    def save_talks(self):
+    def save_talk_interests(self):
         print(f"Updating conference taslk CSV file with user interest preferences")
-        with open("schedule.csv", "w") as schedule:
+        with open("schedule-interests.csv", "w") as schedule_interests:
             for talk in self.talks:
-                schedule.write(f"{talk.day}${talk.time}${talk.stage}${talk.title}${talk.speaker}${talk.image}${talk.desc}${talk.interest}\n")
+                schedule_interests.write(f"{talk.title}${talk.interest}\n")
     
     
     def run_foreground(self):
@@ -172,7 +187,7 @@ class Talks(BaseApp):
 
         # Go back to top level
         if self.badge.keyboard.f5():
-            self.save_talks()
+            self.save_talk_interests()
             self.badge.display.clear()
             self.switch_to_background()
 
