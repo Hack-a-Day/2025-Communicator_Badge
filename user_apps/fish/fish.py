@@ -30,20 +30,18 @@ def sign(x):
 
 class Bubble:
     def __init__(self, lv_obj):
-        print('bubble: make')
         self.lv_obj = lv_obj
         self.lv_obj.set_text('o')
         self.x = random.randint(0, SCREEN_WIDTH)
         self.dx = random.uniform(-2, 2)
         self.y = SCREEN_HEIGHT
         self.dy = -random.uniform(1, 4)
-    
+
     def update(self):
         self.x += self.dx
         self.y += self.dy
         self.dx = random.uniform(-2, 2)
 
-        print('bubble: update', self.x, int(self.x), self.y, int(self.y))
         self.lv_obj.set_pos(int(self.x), int(self.y))
 
 
