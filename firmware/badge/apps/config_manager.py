@@ -96,21 +96,27 @@ class ConfigManager(BaseApp):
         else:
             key = self.badge.keyboard.read_key()
             if key == self.badge.keyboard.UP:
-                self.page.message_rows.set_cell_value(
-                    self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
-                )
-                self.cursor_pos = max(0, self.cursor_pos - 1)
-                self.page.message_rows.set_cell_value(
-                    self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
-                )
+                if self.badge.keyboard.shift_pressed:
+                    self.page.scroll_up(13)
+                else:
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
+                    )
+                    self.cursor_pos = max(0, self.cursor_pos - 1)
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
+                    )
             elif key == self.badge.keyboard.DOWN:
-                self.page.message_rows.set_cell_value(
-                    self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
-                )
-                self.cursor_pos = min(len(self.config) - 1, self.cursor_pos + 1)
-                self.page.message_rows.set_cell_value(
-                    self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
-                )
+                if self.badge.keyboard.shift_pressed:
+                    self.page.scroll_down(13)
+                else:
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
+                    )
+                    self.cursor_pos = min(len(self.config) - 1, self.cursor_pos + 1)
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
+                    )
             if self.badge.keyboard.f1():
                 try:
                     int(self.config[self.cursor_pos][1])
