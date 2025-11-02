@@ -105,8 +105,9 @@ class App(BaseApp):
     def receive_message(self, message: NetworkFrame):
         print(f"Received message: {message}")
         if message.port == ROCK_PAPER_SCISSOR.port:
-            remote_choice_id, self.remote_alias = message.payload
+            remote_choice_id, remote_alias_bytes = message.payload
             self.remote_choice = chr(remote_choice_id)
+            self.remote_alias = remote_alias_bytes.strip(b'\x00').decode()
     
     def send_message(self):
         tx_frame = NetworkFrame().set_fields(
@@ -165,8 +166,16 @@ class App(BaseApp):
                 current_time = time.time()
                 time_left = self.choice_time + PLAY_TIMEOUT - current_time
                 if time_left <= 0:
-                    self.remote_choice = random.choice(["R", "P", "S"])
-                    self.remote_alias = "badge"
+                    # receive a simulated message to exercise message handling
+                    choice = random.choice(["R", "P", "S"])
+                    alias = b'badge\x00\x00\x00\x00\x00'
+                    message = NetworkFrame().set_fields(
+                        protocol=ROCK_PAPER_SCISSOR,
+                        destination=BROADCAST_ADDRESS,
+                        payload=(ord(choice), alias),
+                        ttl=2,
+                    )
+                    self.receive_message(message)
                 else:
                     self.update_status(f"{time_left}s remaining")
                     if self.send_retry_time - current_time <= 0:
@@ -204,9 +213,7 @@ class App(BaseApp):
             self.game_over = True
 
             self.page = Page()
-            ## Note this order is important: it renders top to bottom that the "content" section expands to fill empty space
-            ## If you want to go fully clean-slate, you can draw straight onto the p.scr object, which should fit the full screen.
-            self.page.create_infobar(["Rock/Paper/Scissor", "Press Start to begin"])
+            self.page.create_infobar(["Rock/Paper/Scissors", "Press Start to begin"])
             self.page.create_content()
             self.label = lvgl.label(self.page.content)
             self.label.set_style_text_font(lvgl.font_montserrat_42, lvgl.STATE.DEFAULT)
