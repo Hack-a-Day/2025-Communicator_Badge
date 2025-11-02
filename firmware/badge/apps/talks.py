@@ -57,7 +57,7 @@ class Talks(BaseApp):
         # talks = []
         interests_entries = []
         try:
-            with open("schedule-interests.csv", "r") as schedule_interests:
+            with open("data/schedule-interests.csv", "r") as schedule_interests:
                 interests_lines = schedule_interests.readlines()
                 for line in interests_lines:
                     interests_entries.append(line.strip().split("$"))
@@ -102,7 +102,7 @@ class Talks(BaseApp):
     
     def save_talk_interests(self):
         print(f"Updating conference taslk CSV file with user interest preferences")
-        with open("schedule-interests.csv", "w") as schedule_interests:
+        with open("data/schedule-interests.csv", "w") as schedule_interests:
             for talk in self.talks:
                 schedule_interests.write(f"{talk.title}${talk.interest}\n")
     
