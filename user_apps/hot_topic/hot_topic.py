@@ -60,7 +60,7 @@ class HotTopic(BaseApp):
             If you don't have anything else to add, you can delete this method.
         """
         super().start()
-        # register_receiver(NEW_PROTOCOL, self.receive_message)
+        register_receiver(TEXT_CHAT, self.receive_message)
 
     def receive_message(self, message: NetworkFrame):
         self.received_count += 1
@@ -83,21 +83,12 @@ class HotTopic(BaseApp):
             Don't block in this function, for it will block reading the radio and keyboard.
             If the app only runs in the background, you can delete this method.
         """
-        #set promiscuous mode
-        register_receiver(TEXT_CHAT, self.receive_message)
-        self.p = Page()
-        ## Note this order is important: it renders top to bottom that the "content" section expands to fill empty space
-        ## If you want to go fully clean-slate, you can draw straight onto the p.scr object, which should fit the full screen.
-        self.p.create_infobar(["Hot Topic", "Most active topics seen"])
-        self.p.create_content()
-        self.p.add_message_rows(len(self.topics), 50)
         mrows = [("-1", "No messages seen yet")]
         if len(self.topics) > 0:
             pre_sorted = [[channel, self.topics[channel]["count"], self.topics[channel]["alias"]] for channel in self.topics]
             sorted_topics = [i for i in sorted(pre_sorted, key=lambda topic: topic[1], reverse=self.reverse_sort)]
             mrows = [(t[0], f"{t[1]} messages, most recent from {t[2][:10]}") for t in sorted_topics]
         self.p.populate_message_rows(mrows)
-        self.p.create_menubar(["Sort Asc" if self.reverse_sort else "Sort Desc", "", "", "", "Done"])
         self.p.replace_screen()
 
         if self.badge.keyboard.f1():
@@ -122,6 +113,15 @@ class HotTopic(BaseApp):
         """
         #print(f"setting capture all packets to true")
         capture_all_packets(True)
+
+        self.p = Page()
+        ## Note this order is important: it renders top to bottom that the "content" section expands to fill empty space
+        ## If you want to go fully clean-slate, you can draw straight onto the p.scr object, which should fit the full screen.
+        self.p.create_infobar(["Hot Topic", "Most active topics seen"])
+        self.p.create_content()
+        self.p.add_message_rows(len(self.topics), 50)
+        self.p.create_menubar(["Sort Asc" if self.reverse_sort else "Sort Desc", "", "", "", "Done"])
+
         super().switch_to_foreground()
 
     def switch_to_background(self):
