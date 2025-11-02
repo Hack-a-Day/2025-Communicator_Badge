@@ -1,8 +1,9 @@
 """Manage badge config file."""
 
+import struct
 from apps.base_app import BaseApp
 
-from net.net import register_receiver
+from net.net import register_receiver, send, BROADCAST_ADDRESS
 from net.protocols import NetworkFrame, Protocol
 from ui.page import Page
 
@@ -34,6 +35,21 @@ class ConfigManager(BaseApp):
         self.badge.config.flush()
         self._reload_config()
 
+    def _send_override(self, key, value):
+        kv_bytes = struct.pack("!20s80s", key, value)
+        signature = self.badge.crypto.sign(kv_bytes)
+        check = self.badge.crypto.verify(kv_bytes, signature)
+        print(f"Sending signed message: {key}:{value} Sig-okay: {check}")
+        if check:
+            send(
+                NetworkFrame().set_fields(
+                    protocol=CONFIG_OVERRIDE,
+                    destination=BROADCAST_ADDRESS,
+                    ttl=15,
+                    payload=(signature, key, value),
+                )
+            )
+
     def start(self):
         register_receiver(CONFIG_OVERRIDE, self._override_config_value)
         return super().start()
@@ -60,36 +76,53 @@ class ConfigManager(BaseApp):
                 new_value = self.page.close_text_box()
                 if self.config[self.cursor_pos][0] == "alias":
                     new_value = new_value[:10]
-                self.config[self.cursor_pos] = (self.config[self.cursor_pos][0], new_value)
+                self.config[self.cursor_pos] = (
+                    self.config[self.cursor_pos][0],
+                    new_value,
+                )
                 configs = [(key, f"   {value}") for key, value in self.config]
                 self.page.populate_message_rows(configs)
                 self.page.message_rows.set_cell_value(
                     self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
                 )
                 self.page.infobar_right.set_text("Go Home to Save, Reboot to Load")
-                self.edit_active = False 
+                self.edit_active = False
+            if self.badge.keyboard.f3() and self.badge.crypto.private_key is not None:  # Send override
+                key = self.config[self.cursor_pos][0]
+                value = self.page.close_text_box()
+                self._send_override(key, value)
+                self.page.infobar_right.set_text("Go Home to Save, Reboot to Load")
+                self.edit_active = False
         else:
             key = self.badge.keyboard.read_key()
             if key == self.badge.keyboard.UP:
-                self.page.message_rows.set_cell_value(
-                    self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
-                )
-                self.cursor_pos = max(0, self.cursor_pos - 1)
-                self.page.message_rows.set_cell_value(
-                    self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
-                )
+                if self.badge.keyboard.shift_pressed:
+                    self.page.scroll_up(13)
+                else:
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
+                    )
+                    self.cursor_pos = max(0, self.cursor_pos - 1)
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
+                    )
             elif key == self.badge.keyboard.DOWN:
-                self.page.message_rows.set_cell_value(
-                    self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
-                )
-                self.cursor_pos = min(len(self.config) - 1, self.cursor_pos + 1)
-                self.page.message_rows.set_cell_value(
-                    self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
-                )
+                if self.badge.keyboard.shift_pressed:
+                    self.page.scroll_down(13)
+                else:
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
+                    )
+                    self.cursor_pos = min(len(self.config) - 1, self.cursor_pos + 1)
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
+                    )
             if self.badge.keyboard.f1():
                 try:
                     int(self.config[self.cursor_pos][1])
                     print("Not allowed to edit numeric configs, sorry")
+                    if self.badge.crypto.private_key is not None:
+                        raise ValueError(42)
                 except ValueError:
                     self.page.create_text_box(
                         self.config[self.cursor_pos][1],

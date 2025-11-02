@@ -11,6 +11,8 @@ class Crypto:
         try:
             with open(f"/data/{key_name}_private.der", "rb") as private_key_file:
                 self.private_key = serialization.load_der_private_key(private_key_file.read(), None)
+            if not self.verify("key self check", self.sign("key self check")):
+                self.private_key = None
         except OSError:
             # print("No private key on this badge, unable to cryptographically sign")
             self.private_key = None
