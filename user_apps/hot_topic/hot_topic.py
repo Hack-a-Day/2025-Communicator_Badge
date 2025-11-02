@@ -89,7 +89,6 @@ class HotTopic(BaseApp):
             sorted_topics = [i for i in sorted(pre_sorted, key=lambda topic: topic[1], reverse=self.reverse_sort)]
             mrows = [(t[0], f"{t[1]} messages, most recent from {t[2][:10]}") for t in sorted_topics]
         self.p.populate_message_rows(mrows)
-        self.p.replace_screen()
 
         if self.badge.keyboard.f1():
             self.reverse_sort = not self.reverse_sort
@@ -121,6 +120,7 @@ class HotTopic(BaseApp):
         self.p.create_content()
         self.p.add_message_rows(len(self.topics), 50)
         self.p.create_menubar(["Sort Asc" if self.reverse_sort else "Sort Desc", "", "", "", "Done"])
+        self.p.replace_screen()
 
         super().switch_to_foreground()
 
