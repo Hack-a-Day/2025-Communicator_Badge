@@ -44,5 +44,9 @@ infobar_style.set_radius(0)
 infobar_style.set_border_width(0)
 infobar_style.set_pad_all(0)
 
+lvg_color_black  	= lvgl.color_hex(0x000000)
+lvg_color_red   	= lvgl.color_hex(0x990000)
+lvg_color_green 	= lvgl.color_hex(0x006600)
+
 
 

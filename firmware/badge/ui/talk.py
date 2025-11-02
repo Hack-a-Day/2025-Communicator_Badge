@@ -5,9 +5,14 @@ from ui import styles
 from micropython import const
 from ui.page import Page
 
+
+INTEREST_LEVELS = {"UNKNOWN": 0, "ATTEND": 1, "MAYBE": 2, "SKIP": 3}
+
+
 class Talk(Page):
     """ Talk dict is a dictionary with:
         speaker, title, headshot, abstract, time, and stage defined """
+    
     def __init__(self, talk_dict, menubar_labels):
         super().__init__()
         self.create_content()
@@ -58,6 +63,8 @@ class Talk(Page):
         self.abstract_ta.set_style_text_font(lvgl.font_montserrat_12, 0)
         self.abstract_ta.set_size(300,80)
         self.abstract_ta.set_text(talk_dict["abstract"])
+        
+        self.apply_interest_coloring(talk_dict)
 
 
     def update(self, talk_dict):
@@ -72,6 +79,24 @@ class Talk(Page):
         self.title_line.set_text(talk_dict["title"])
         #self.stage_line.set_text(talk_dict["stage"])
         self.abstract_ta.set_text(talk_dict["abstract"])
+        
+        self.apply_interest_coloring(talk_dict)
+        
+    
+    def apply_interest_coloring(self, talk_dict):
+        if int(talk_dict["interest"]) == INTEREST_LEVELS["ATTEND"]:
+            self.abstract_ta.set_style_bg_color(styles.lvg_color_green, 0)
+            self.abstract_ta.set_style_text_color(styles.hackaday_white, 0)
+        elif int(talk_dict["interest"]) == INTEREST_LEVELS["MAYBE"]:
+            self.abstract_ta.set_style_bg_color(styles.hackaday_yellow, 0)
+            self.abstract_ta.set_style_text_color(styles.lvg_color_black, 0)
+        elif int(talk_dict["interest"]) == INTEREST_LEVELS["SKIP"]:
+            self.abstract_ta.set_style_bg_color(styles.lvg_color_red, 0)
+            self.abstract_ta.set_style_text_color(styles.hackaday_white, 0)
+        else:
+            self.abstract_ta.set_style_bg_color(styles.lcd_color_bg, 0)
+            self.abstract_ta.set_style_text_color(styles.lvg_color_black, 0)
+
 
     def update_menu(self, menubar_labels):
         self.create_content()
