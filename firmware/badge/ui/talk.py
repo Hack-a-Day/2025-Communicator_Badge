@@ -85,17 +85,17 @@ class Talk(Page):
     
     def apply_interest_coloring(self, talk_dict):
         if int(talk_dict["interest"]) == INTEREST_LEVELS["ATTEND"]:
-            self.abstract_ta.set_style_bg_color(styles.hackaday_green, 0)
+            self.abstract_ta.set_style_bg_color(styles.lvg_color_green, 0)
             self.abstract_ta.set_style_text_color(styles.hackaday_white, 0)
         elif int(talk_dict["interest"]) == INTEREST_LEVELS["MAYBE"]:
             self.abstract_ta.set_style_bg_color(styles.hackaday_yellow, 0)
-            self.abstract_ta.set_style_text_color(styles.hackaday_black, 0)
+            self.abstract_ta.set_style_text_color(styles.lvg_color_black, 0)
         elif int(talk_dict["interest"]) == INTEREST_LEVELS["SKIP"]:
-            self.abstract_ta.set_style_bg_color(styles.hackaday_red, 0)
+            self.abstract_ta.set_style_bg_color(styles.lvg_color_red, 0)
             self.abstract_ta.set_style_text_color(styles.hackaday_white, 0)
         else:
             self.abstract_ta.set_style_bg_color(styles.lcd_color_bg, 0)
-            self.abstract_ta.set_style_text_color(styles.hackaday_black, 0)
+            self.abstract_ta.set_style_text_color(styles.lvg_color_black, 0)
 
 
     def update_menu(self, menubar_labels):
