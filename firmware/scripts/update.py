@@ -21,7 +21,7 @@ def check_path(path: str, ) -> dict[str, bytes]:
                 hasher = hashlib.sha256(file.read())
                 files[file_path.as_posix()] = hasher.digest()
         else:
-            if file_path.name == "__pycache__":
+            if file_path.name in ["__pycache__", ".git"]:
                 continue
             files.update(check_path(str(file_path)))
             files[file_path.as_posix()] = b""
