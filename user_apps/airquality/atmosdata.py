@@ -52,7 +52,9 @@ class AtmosphereData(BaseApp):
             self.sps30 = None
 
         self.co2_measurement = [-1, -1, -1]
-        self.particle_measurement = [-1, -1, -1, -1, -1] # five nc buckets
+        self.particle_measurement = []
+        for idx in range(0,4+5+2):
+            self.particle_measurement.append(["",-1.0]) # incomplete dummy data
         self.screen_has_latest_data = True
         self.last_transmission = 0
 
