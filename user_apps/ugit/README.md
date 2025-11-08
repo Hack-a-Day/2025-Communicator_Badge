@@ -1,6 +1,7 @@
 # uGit - OTA updates directly from the repo!
 
 Place ugit.py at the root of the device
+Edit wifi credentials at the top of the file
 
 Open the REPL (crtl+C or crtl+D) and run:
 
