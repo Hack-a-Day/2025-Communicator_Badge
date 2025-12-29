@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 
 # I've now realized mpremote does everything this script does and more, so it should
 # probably be deleted.
