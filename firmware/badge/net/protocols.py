@@ -150,7 +150,7 @@ class NetworkFrame:
                 f"Warning: frame truncated due to being longer [{frame_actual_len}] than reported length [{frame_claimed_len}]."
             )
         claimed_checksum = frame[2:4]
-        calced_checksum = crc_calculator.checksum(frame[5:])
+        calced_checksum = crc_calculator.checksum(frame[5:]).to_bytes(2, "big")
         self.validated_frame = claimed_checksum == calced_checksum
         return self
 
@@ -196,7 +196,7 @@ class NetworkFrame:
             )
             raise
         try:
-            self.checksum = crc_calculator.checksum(frame[5:])
+            self.checksum = crc_calculator.checksum(frame[1:]) # start from frame_length byte
         except Exception as err:
             print(f"Checksumming failed for message: {err}")
             raise
