@@ -43,7 +43,7 @@ class AppManager(BaseApp):
                 continue
             app_modname = filename.split('.')[0]
             print(f"Checking if {app_modname} is in deny list: {APPMOD_DENYLIST}")
-            if not app_modname in APPMOD_DENYLIST:
+            if app_modname not in APPMOD_DENYLIST:
                 app_mods.append(app_modname)
         if app_mods:
             print(f"Found app mods: {app_mods}")
@@ -59,17 +59,21 @@ class AppManager(BaseApp):
                 continue
             appmod = getattr(apps, appmod_name)
             try:
-                print(f"Checking app module: {appmod}")
-                if (
-                    hasattr(appmod, "APP_NAME") and (
-                        hasattr(appmod, "APP_CLASS") or
-                        hasattr(appmod, "App")
-                )):
-                    app_name = appmod.APP_NAME
-                    app_class = getattr(appmod, "APP_CLASS", None) or getattr(appmod, "App")
-                    app = app_class(app_name, badge)
-                    self.apps.append(app)
-                    print(f"Added app: {app_name}")
+                for modattr in appmod.__dict__.values():
+                    if hasattr(modattr, "__bases__") and BaseApp in modattr.__bases__:
+                        if hasattr(appmod, "APP_NAME"):
+                            app_name = app_name = appmod.APP_NAME
+                        else:
+                            app_name = modattr.__name__
+                            if app_name == "App":
+                                app_name = appmod.__name__.split(".")[-1]
+                                app_name = f"{app_name[0].upper()}{app_name[1:]}"
+                            app_name = app_name[:9]
+                        # app_class = getattr(appmod, "APP_CLASS", None) or getattr(appmod, "App")
+                        app = modattr(app_name, badge)
+                        if not any([app_name == app.name for app in self.apps]):
+                            self.apps.append(app)
+                            print(f"Added app: {app_name}")
 
             except Exception as exc:
                 print(f"Failed to load app module: {appmod}")
