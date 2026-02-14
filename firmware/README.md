@@ -126,6 +126,14 @@ This network stack is not trying to be secure. The goals are discoverability and
 
 An [ImHex](https://github.com/WerWolv/ImHex) pattern file is provided at [lora.hexpat](lora.hexpat) for parsing and inspecting raw LoRa packets used by the badge. It allows decoding the packet header (flags, addresses, and checksum), and protocol-specific payloads (Ping, Pong, TextChat, SignedTextChat, ConfigOverride). The pattern can be extended to support additional protocols.
 
+<details>
+
+<summary>ImHex screenshot</summary>
+
+![ImHex screenshot](../images/imhex_screenshot.png)
+
+</details>
+
 ## Apps
 
 Apps are python classes that can asynchronously run behaviors, and potentially take control of the display for user interactions. Each app has its own async task and runs on its own update rate. Check out [demo.py](badge/apps/demo.py) to see many different app behaviors demonstrated, or the other apps in the `badge/apps/` directory. If you want to make a new App, start by copying [template_app.py](badge/apps/template_app.py) and populating or deleting methods as needed.
