@@ -53,6 +53,7 @@ class Badge:
             self.send_cooldown_ms = int(self.config.get("send_cooldown_ms"))
         except ValueError:
             self.send_cooldown_ms = 1
+        board.DEBUG_LED.off()  # Default LED off
         self.lora: LoraRadio = LoraRadio(board.DEBUG_LED, tx_power=tx_power)
         self.display: Display = Display()
         self.display.backlight.duty(500)

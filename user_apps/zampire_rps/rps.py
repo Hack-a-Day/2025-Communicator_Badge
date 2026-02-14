@@ -114,7 +114,7 @@ class App(BaseApp):
             protocol=ROCK_PAPER_SCISSOR,
             destination=BROADCAST_ADDRESS,
             payload=(ord(self.user_choice), self.my_alias[:10]),
-            ttl=2,
+            ttl=4,
         )
         send(tx_frame)
         current_time = time.time()
@@ -173,7 +173,7 @@ class App(BaseApp):
                         protocol=ROCK_PAPER_SCISSOR,
                         destination=BROADCAST_ADDRESS,
                         payload=(ord(choice), alias),
-                        ttl=2,
+                        ttl=4,
                     )
                     self.receive_message(message)
                 else:

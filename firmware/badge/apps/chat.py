@@ -51,9 +51,9 @@ class ChatApp(BaseApp):
         self.topic_picker_active = False
         self.auto_follow = False
         try:
-            self.chat_ttl = int(self.badge.config.get("chat_ttl", b"3"))
+            self.chat_ttl = int(self.badge.config.get("chat_ttl", b"8"))
         except ValueError:
-            self.chat_ttl = 2
+            self.chat_ttl = 7
 
     def _update_channel_messages(self, seek = None):
         if not self.channel_messages_updated:
