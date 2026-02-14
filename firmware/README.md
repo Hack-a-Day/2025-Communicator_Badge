@@ -291,11 +291,13 @@ scripts/update.py pull
 
 To make a new App, start by copying `apps/template_app.py` and giving the copy a new name. You will also want to rename the class inside it. Read the docstrings for the included methods, and refer to the above guide for how to use each method. Methods you don't need to customize the behavior of can be deleted from your file.
 
-Thanks to the `AppManager`, moving your new app file into `apps/` is all you need to do to get your new app loaded. Select `User Apps` (`FN4`) to see the user-added apps, and run yours. The name it will use in the menu will be one of the following (in decreasing order of precedence):
+Thanks to the `AppManager`, moving your new app file into `apps/` is all you need to do to get your new app loaded. Select `Apps` (`FN4`) to see the user-added apps, and run yours. The name it will use in the menu will be one of the following (in decreasing order of precedence):
 
 * The file sets a variable `APP_NAME` with a string of the name to display.
 * The app class name (subclassed from `BaseApp`).
 * The file name (if the app class name is `App`).
+
+Try to keep the names to 9 characters or fewer so all the names fit together well above the buttons.
 
 ## REPL and debugging on the badge
 
