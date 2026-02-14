@@ -8,6 +8,7 @@ The Communicator Badge is running Micropython, compiled with LVGL and ucryptogra
   - [Network Stack](#network-stack)
     - [RF Frequency Control](#rf-frequency-control)
     - [Security Implications](#security-implications)
+    - [Packet Analysis with ImHex](#packet-analysis-with-imhex)
   - [Apps](#apps)
     - [App Structure](#app-structure)
     - [Using LVGL](#using-lvgl)
@@ -121,6 +122,9 @@ This network stack is not trying to be secure. The goals are discoverability and
 * Spoofing the identity of other badges
 * Small RSA key size
 
+### Packet Analysis with ImHex
+
+An [ImHex](https://github.com/WerWolv/ImHex) pattern file is provided at [lora.hexpat](lora.hexpat) for parsing and inspecting raw LoRa packets used by the badge. It allows decoding the packet header (flags, addresses, and checksum), and protocol-specific payloads (Ping, Pong, TextChat, SignedTextChat, ConfigOverride). The pattern can be extended to support additional protocols.
 
 ## Apps
 
