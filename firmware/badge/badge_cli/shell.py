@@ -10,14 +10,27 @@ MicroPython-compatible: no typing imports, no advanced Python features.
 import sys
 
 
+# ANSI Color codes for MicroPython
+class Colors:
+    BLUE = "\x1b[34m"
+    GREEN = "\x1b[32m"
+    YELLOW = "\x1b[33m"
+    RED = "\x1b[31m"
+    CYAN = "\x1b[36m"
+    MAGENTA = "\x1b[35m"
+    BOLD = "\x1b[1m"
+    UNDERLINE = "\x1b[4m"
+    END = "\x1b[0m"
+
+
 # MOTD banner displayed on shell start
 MOTD = r"""
- _               _                   _ _ 
+ """ + Colors.CYAN + r"""_               _                   _ _ 
 | |__   __ _  __| | __ _  ___    ___| (_)
 | '_ \ / _` |/ _` |/ _` |/ _ \  / __| | |
 | |_) | (_| | (_| | (_| |  __/ | (__| | |
 |_.__/ \__,_|\__,_|\__, |\___|  \___|_|_|
-                   |___/         v0.1
+                   |___/         """ + Colors.YELLOW + r"""v0.2""" + Colors.END + r"""
 Type 'help' or '?' for a list of commands.
 """
 
@@ -49,6 +62,9 @@ class Shell:
 
         # Register built-in command modules
         self._init_commands()
+        
+        # Current working directory
+        self.cwd = "/"
         
         # History management
         self._history = []
@@ -123,7 +139,8 @@ class Shell:
 
     def _prompt(self):
         """Write the shell prompt."""
-        self._write_raw("\r\nbadge >: ")
+        prompt = "\r\n" + Colors.GREEN + "badge" + Colors.END + " [" + Colors.CYAN + self.cwd + Colors.END + "] >: "
+        self._write_raw(prompt)
 
     def motd(self):
         """Print the Message of the Day banner."""
@@ -240,16 +257,49 @@ class Shell:
             if group.startswith(prefix):
                 matches.append(group)
         
-        # If prefix contains a space, check sub-commands
+        # If prefix contains a space, check sub-commands or paths
         if " " in prefix:
             parts = prefix.split(" ")
             group_name = parts[0]
             sub_prefix = " ".join(parts[1:])
+            
             if group_name in self._groups:
                 group = self._groups[group_name]
                 for sub in group:
                     if sub.startswith(sub_prefix):
                         matches.append(group_name + " " + sub)
+                
+                # Special case for storage paths
+                if group_name == "storage" and len(parts) > 1:
+                    path_prefix = parts[-1]
+                    dir_path = ""
+                    search_term = path_prefix
+                    
+                    if "/" in path_prefix:
+                        if path_prefix.endswith("/"):
+                            dir_path = path_prefix
+                            search_term = ""
+                        else:
+                            parts_path = path_prefix.rsplit("/", 1)
+                            dir_path = parts_path[0] if parts_path[0] else "/"
+                            search_term = parts_path[1]
+                    
+                    try:
+                        import os
+                        if path_prefix.startswith("/") or (len(path_prefix) > 1 and path_prefix[1] == ":"):
+                            abs_dir = dir_path
+                        else:
+                            abs_dir = (self.cwd.rstrip("/") + "/" + dir_path).replace("//", "/").replace("\\", "/")
+                        
+                        for entry in os.listdir(abs_dir):
+                            if entry.startswith(search_term):
+                                if dir_path:
+                                    full_p = (dir_path.rstrip("/") + "/" + entry).replace("//", "/").replace("\\", "/")
+                                else:
+                                    full_p = entry
+                                matches.append(group_name + " " + parts[1] + " " + full_p)
+                    except Exception as e:
+                        pass
         
         return matches
 

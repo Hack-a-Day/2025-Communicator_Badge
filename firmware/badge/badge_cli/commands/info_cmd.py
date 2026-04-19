@@ -15,6 +15,7 @@ class InfoCommands:
             {
                 "device": (self._cmd_device, "Hardware and firmware info"),
                 "power": (self._cmd_power, "Battery / power info"),
+                "top": (self._cmd_top, "Interactive system monitor (Ctrl+C to stop)"),
             },
             "System information"
         )
@@ -58,15 +59,65 @@ class InfoCommands:
 
         # Memory
         import gc
+        from badge_cli.shell import Colors
         if hasattr(gc, "mem_free") and hasattr(gc, "mem_alloc"):
             free = gc.mem_free()
             alloc = gc.mem_alloc()
             total = free + alloc
-            w("Heap:       %d / %d bytes (%d%% used)" % (
-                alloc, total, alloc * 100 // total if total else 0
-            ))
+            used_pct = alloc * 100 // total if total else 0
+            color = Colors.GREEN
+            if used_pct > 70: color = Colors.YELLOW
+            if used_pct > 90: color = Colors.RED
+            w("Heap:       " + color + "%d / %d bytes (%d%% used)" % (
+                alloc, total, used_pct
+            ) + Colors.END)
         else:
             w("Heap:       (info not available)")
+
+    def _cmd_top(self, args):
+        """Interactive system monitor."""
+        import gc
+        import time
+        from badge_cli.shell import Colors
+        
+        self.shell._streaming = True
+        self.shell._write(Colors.CYAN + "System Monitor (top) - Press Ctrl+C to exit" + Colors.END)
+        self.shell._write("Time       | Heap Used  | Free      | % Used")
+        self.shell._write("-" * 45)
+        
+        try:
+            while self.shell._streaming:
+                self.shell.check_interrupt()
+                
+                free = gc.mem_free()
+                alloc = gc.mem_alloc()
+                total = free + alloc
+                used_pct = alloc * 100 // total if total else 0
+                
+                # Get uptime or current time
+                try:
+                    uptime = time.ticks_ms() // 1000
+                except AttributeError:
+                    uptime = int(time.time())
+                
+                color = Colors.GREEN
+                if used_pct > 70: color = Colors.YELLOW
+                if used_pct > 90: color = Colors.RED
+                
+                line = "\r%08d s | %10d | %9d | " % (uptime, alloc, free)
+                line += color + ("%2d%%" % used_pct) + Colors.END
+                
+                self.shell._write_raw(line)
+                
+                # Wait 1 second but check for interrupts
+                for _ in range(10):
+                    if not self.shell._streaming: break
+                    self.shell.check_interrupt()
+                    time.sleep(0.1)
+            
+            self.shell._write("\r\nStopped.")
+        finally:
+            self.shell._streaming = False
 
     def _cmd_power(self, args):
         """Show battery / power info (stub — no fuel gauge on badge)."""
