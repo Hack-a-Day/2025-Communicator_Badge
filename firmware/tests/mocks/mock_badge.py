@@ -44,6 +44,9 @@ class MockKeyboard:
     def __init__(self):
         self.keybuffer = deque([], 10)
         self.PC_KEY_MAPPING = {}
+        self.ENTER = "\n"
+        self.BS = "\b"
+        self.BACKSPACE = "\b" # Alias often used
 
     def read_key(self):
         if self.keybuffer:

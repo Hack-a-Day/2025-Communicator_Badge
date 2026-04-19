@@ -95,23 +95,21 @@ class ShellGuiApp(BaseApp):
         # Handle Keyboard Input
         key = self.badge.keyboard.read_key()
         if key:
-            if len(key) == 1:
-                # Echo the key and add to command
-                self.current_cmd += key
-                self._shell_write(key)
-            elif key == self.badge.keyboard.ENTER:
+            if key == self.badge.keyboard.ENTER:
                 self._shell_write("\r\n")
                 if self.current_cmd.strip():
                     self.shell.run_command(self.current_cmd)
                     self.current_cmd = ""
                 self.shell._prompt()
-            elif key == self.badge.keyboard.BACKSPACE:
+            elif key == self.badge.keyboard.BS:
                 if self.current_cmd:
                     self.current_cmd = self.current_cmd[:-1]
-                    # LvGL textarea backspace logic
-                    self._shell_write("\x08 \x08") # This might not work in TA, let's just edit current line
-                    # Better: delete the last character in TA
+                    # Delete the last character in TA
                     self.ta.del_char()
+            elif len(key) == 1:
+                # Echo the key and add to command
+                self.current_cmd += key
+                self._shell_write(key)
 
         # Menu Buttons
         if self.badge.keyboard.f1(): # Exit
