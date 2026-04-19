@@ -48,13 +48,21 @@ class BadUsbCommands:
         import time
         try:
             for line in lines:
+                if self.shell.check_interrupt():
+                    w("Interrupted.")
+                    break
                 line = line.strip()
                 if not line or line.startswith("REM"):
                     continue
                     
                 if line.startswith("DELAY "):
                     delay_ms = int(line[6:].strip())
-                    time.sleep(delay_ms / 1000.0)
+                    start_sleep = time.time()
+                    while time.time() - start_sleep < delay_ms / 1000.0:
+                        if self.shell.check_interrupt():
+                            w("Interrupted.")
+                            return
+                        time.sleep(0.05)
                 elif line.startswith("STRING "):
                     text = line[7:]
                     self._type_string(text)

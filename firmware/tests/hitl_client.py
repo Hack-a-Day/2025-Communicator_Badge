@@ -129,15 +129,21 @@ class BadgeMockClient(BaseCLIClient):
     def disconnect(self):
         pass
 
-    def run_command(self, cmd, timeout=2.0):
-        # 1. Reset everything
-        self._stdin_buf.clear()
-        self._stdout_lines.clear()
-        self.app._line_buf = ""
-        
-        # 2. Queue command
-        for char in cmd + "\n":
+    def send_raw(self, chars):
+        """Send raw characters to the CLI input buffer."""
+        for char in chars:
             self._stdin_buf.append(char)
+
+    def run_command(self, cmd, timeout=2.0, max_iters=None):
+        # 1. Reset everything (only if cmd is provided)
+        if cmd:
+            self._stdin_buf.clear()
+            self._stdout_lines.clear()
+            self.app._line_buf = ""
+            
+            # 2. Queue command
+            for char in cmd + "\n":
+                self._stdin_buf.append(char)
 
         # 3. Direct mock of reading
         orig_read = self.app.read_stdin_noblock
@@ -145,12 +151,12 @@ class BadgeMockClient(BaseCLIClient):
         self.app.read_stdin_noblock.side_effect = lambda: self._stdin_buf.pop(0) if self._stdin_buf else ""
         
         # 4. Run loop until prompt appears
-        max_iters = 50000 
+        iters_limit = max_iters or 100000 
         iters = 0
         found_prompt = False
         target_prompt = "badge >: " 
         
-        while iters < max_iters:
+        while iters < iters_limit:
             self.app.run_background()
             iters += 1
             current_output = "".join(self._stdout_lines)

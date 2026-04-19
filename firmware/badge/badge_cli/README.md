@@ -85,20 +85,35 @@ The CLI uses a grouped structure. Type `<group> ?` for sub-commands.
 - `net ping [addr]`: Send a network-layer ping to another badge.
 - `net sniff`: Capture and print all network traffic.
 
-#### `storage` — Filesystem
+#### `storage` — Filesystem & File Transfer
 - `storage list [path]`: List files and directories on flash.
 - `storage read <path>`: Print file contents to the terminal.
 - `storage write <path> <data>`: Create or overwrite a file.
 - `storage remove <path>`: Delete a file or empty directory.
+- `storage xsend <path>`: **Send** a file from badge to PC via XMODEM-CRC.
+- `storage xreceive <path>`: **Receive** a file from PC to badge via XMODEM-CRC.
 
-#### `hardware` (i2c, gpio)
-- `i2c scan`: Scan the SAO bus for devices.
-- `gpio mode <pin> <in|out>`: Set pin direction.
-- `gpio read/set <pin>`: Interact with GPIO.
+#### `badusb` — HID Injection
+- `badusb run <path>`: Execute a DuckyScript from the filesystem.
+- `badusb type <text>`: Inject a string as keyboard input.
+- `badusb press <key>`: Inject a specific key press (e.g., ENTER, ESC).
+
+#### `wifi` & `ble` — Wardriving
+- `wifi scan`: Scan for 2.4GHz access points.
+- `ble scan [timeout]`: Scan for nearby Bluetooth Low Energy devices.
 
 ---
 
+## Technical Details
+
+### Interrupt Handling
+The CLI is designed for responsiveness. Long-running commands (like `lora rx` or `badusb run`) periodically check for a user interrupt (Ctrl+C). This is implemented via `self.shell.check_interrupt()`, ensuring the CLI never "hangs" during hardware-intensive tasks.
+
+### Binary I/O (XMODEM)
+The `Shell` class supports raw binary I/O, allowing for robust file transfers. The `xsend` and `xreceive` commands implement the **XMODEM-CRC** protocol, providing a reliable way to update scripts and assets on the badge without needing a full MicroPython development environment.
+
 ## Testing Framework
+...
 
 The CLI includes a comprehensive test suite that runs in CPython, enabling fast development without hardware.
 

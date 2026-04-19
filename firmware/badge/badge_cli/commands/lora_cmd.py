@@ -119,6 +119,8 @@ class LoraCommands:
         self.shell._streaming = True
         try:
             while self.shell._streaming:
+                if self.shell.check_interrupt():
+                    break
                 while badgenet.promiscuous_queue:
                     frame = badgenet.promiscuous_queue.popleft()
                     try:
@@ -166,6 +168,8 @@ class LoraCommands:
         self.shell._streaming = True
         try:
             while self.shell._streaming:
+                if self.shell.check_interrupt():
+                    break
                 while badgenet.promiscuous_queue:
                     frame = badgenet.promiscuous_queue.popleft()
                     if frame.frame:
