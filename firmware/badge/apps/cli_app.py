@@ -67,6 +67,7 @@ class CliApp(BaseApp):
 
     def _handle_cli_input(self, ch):
         """Handle input in CLI mode — build lines, dispatch on Enter."""
+        self.show_ui_feedback()
         if ch in ("\r", "\n"):
             # Echo the newline
             sys.stdout.write("\r\n")
@@ -99,3 +100,28 @@ class CliApp(BaseApp):
             pass
         elif len(ch) == 1:
             self.badge.keyboard.keybuffer.append(ch)
+
+    def show_ui_feedback(self):
+        """Show UI feedback on the LCD when CLI is active."""
+        if hasattr(self.badge, "display") and hasattr(self.badge.display, "show_cli_active"):
+            self.badge.display.show_cli_active()
+            return
+
+        try:
+            import lvgl as lv
+            # For real hardware
+            if not getattr(self, "_cli_label", None):
+                scr = lv.scr_act()
+                self._cli_label = lv.label(scr)
+                self._cli_label.set_text("CLI Active")
+                self._cli_label.align(lv.ALIGN.TOP_RIGHT, -5, 5)
+                # Fallback style setup (simple)
+                try:
+                    self._cli_label.set_style_bg_color(lv.palette_main(lv.PALETTE.RED), 0)
+                    self._cli_label.set_style_bg_opa(lv.OPA.COVER, 0)
+                    self._cli_label.set_style_text_color(lv.color_white(), 0)
+                    self._cli_label.set_style_pad_all(2, 0)
+                except AttributeError:
+                    pass # Older LVGL version syntax fallback
+        except ImportError:
+            pass

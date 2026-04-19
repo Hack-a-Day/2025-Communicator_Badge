@@ -1,7 +1,10 @@
 """Template app for badge applications. Copy this file and update to implement your own app."""
 
 import gc
-import uasyncio as aio  # type: ignore
+try:
+    import uasyncio as aio  # type: ignore
+except ImportError:
+    import asyncio as aio
 
 from hardware.badge import Badge
 

@@ -267,7 +267,7 @@ class MetaCommands:
         info = [
             "badge@" + addr,
             "──────────────",
-            "OS: BadgeOS 2025-Supercon",
+            "OS: Badge CLI Hackaday Europe 2026",
             "Host: Hackaday Communicator Badge",
             "Kernel: MicroPython + asyncio",
             "Radio: SX1262 slot " + freq_slot + " (" + freq_mhz + " MHz)",

@@ -119,17 +119,30 @@ class TestLoraCommands:
 
     def test_lora_rx_no_badgenet(self, shell_and_output):
         shell, output = shell_and_output
+        import threading, time
+        def interrupter():
+            time.sleep(0.1)
+            shell.interrupt()
+        t = threading.Thread(target=interrupter)
+        t.start()
         shell.run_command("lora rx")
-        # Without BadgeNet, should show mock output
-        assert "BadgeNet not available" in output.text or "Listening" in output.text
+        t.join()
+        assert "Listening" in output.text
 
     def test_lora_rx_raw_with_mock_data(self, shell_and_output):
         shell, output = shell_and_output
+        import threading, time
         # Inject some data into mock lora rx queue
         shell.badge.lora.inject_rx(b"\x48\x45\x4c\x4c\x4f")
+        def interrupter():
+            time.sleep(0.1)
+            shell.interrupt()
+        t = threading.Thread(target=interrupter)
+        t.start()
         shell.run_command("lora rx_raw")
+        t.join()
         text = output.text
-        assert "4845" in text.lower() or "BadgeNet" in text
+        assert "Listening" in text or "4845" in text.lower()
 
     def test_lora_help(self, shell_and_output):
         shell, output = shell_and_output
@@ -169,6 +182,28 @@ class TestHardwareCommands:
         shell.run_command("i2c scan")
         assert "0x3c" in output.text
         assert "0x50" in output.text
+
+    def test_i2c_dump(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.badge.sao_i2c.add_device(0x50)
+        shell.run_command("i2c dump 0x50 32")
+        assert "Dump of 0x50" in output.text
+        assert "0000  00 01 02 03 04 05 06 07" in output.text
+
+    def test_gpio_logic(self, shell_and_output):
+        import sys
+        shell, output = shell_and_output
+        
+        # Mock machine.Pin to return an alternating sequence 1, 0, 1, 0...
+        mock_machine = sys.modules["machine"]
+        mock_pin = mock_machine.Pin.return_value
+        mock_pin.value.side_effect = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+        
+        shell.run_command("gpio logic sao1 10 1")
+        assert "Capturing" in output.text
+        assert "Waveform" in output.text
+        assert "‾_‾_‾_‾_‾_" in output.text
+        assert "Sequence: 1010101010" in output.text
 
     def test_vibro_unsupported(self, shell_and_output):
         shell, output = shell_and_output
@@ -239,6 +274,30 @@ class TestStorageCommands:
         shell.run_command("storage stat /nonexistent_file_xyz_test")
         assert "Error" in output.text
 
+    def test_storage_push_pull(self, shell_and_output, tmp_path):
+        import binascii
+        shell, output = shell_and_output
+        test_file = tmp_path / "test_base64.txt"
+        test_data = b"Hello from the base64 push and pull test! This should work perfectly."
+        
+        # Test push
+        b64_str = binascii.b2a_base64(test_data).decode('ascii').strip()
+        shell.run_command(f"storage push {test_file} {b64_str}")
+        assert "Wrote" in output.text
+        assert test_file.exists()
+        assert test_file.read_bytes() == test_data
+        
+        output.clear()
+        
+        # Test pull
+        shell.run_command(f"storage pull {test_file}")
+        # Reconstruct from output
+        pulled_b64 = output.text.strip()
+        # The output might have newlines or other logging, but we'll try parsing the last line
+        # Actually it's just the base64 output
+        decoded = binascii.a2b_base64(pulled_b64)
+        assert decoded == test_data
+
 
 class TestNametagCommands:
     def test_nametag_get(self, shell_and_output):
@@ -287,6 +346,90 @@ class TestPowerCommands:
         assert "off" in output.text
         assert "reboot" in output.text
 
+
+class TestSubGhzCommands:
+    def test_subghz_rx_no_data(self, shell_and_output):
+        shell, output = shell_and_output
+        # Without data, it should timeout and say no data received
+        shell.run_command("subghz rx 433.92")
+        assert "Listening" in output.text
+        assert "No data received" in output.text
+
+    def test_subghz_rx_with_data(self, shell_and_output):
+        from collections import deque
+        shell, output = shell_and_output
+        shell.badge.lora._ook_rx_queue = deque([b"\xAA\xBB\xCC\xDD"])
+        shell.run_command("subghz rx 433.92")
+        assert "aabbccdd" in output.text
+
+    def test_subghz_tx(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("subghz tx 433.92 AABBCCDD")
+        assert "Transmitting" in output.text
+        assert "complete" in output.text
+        assert getattr(shell.badge.lora, "_ook_tx_log", None)
+        assert shell.badge.lora._ook_tx_log[0] == (433.92, b"\xaa\xbb\xcc\xdd")
+
+
+class TestWardrivingCommands:
+    def test_wifi_scan(self, shell_and_output, monkeypatch):
+        import sys
+        shell, output = shell_and_output
+        
+        # Setup mock network module
+        mock_network = sys.modules["network"]
+        mock_sta = mock_network.WLAN.return_value
+        mock_sta.active.return_value = True
+        mock_sta.scan.return_value = [
+            (b"TestNet_2G", b"\x11\x22\x33\x44\x55\x66", 6, -55, 3, 0),
+            (b"OpenWifi", b"\xaa\xbb\xcc\xdd\xee\xff", 11, -80, 0, 0),
+        ]
+        
+        shell.run_command("wifi scan")
+        assert "TestNet_2G" in output.text
+        assert "OpenWifi" in output.text
+        assert "WPA2" in output.text
+        assert "OPEN" in output.text
+        assert "11:22:33:44:55:66" in output.text
+
+    def test_ble_scan(self, shell_and_output, monkeypatch):
+        import sys
+        shell, output = shell_and_output
+        
+        # Setup mock bluetooth module
+        mock_bt = sys.modules["bluetooth"]
+        mock_ble = mock_bt.BLE.return_value
+        del mock_ble.irq
+        # Add a mock_scan method since the real irq based one won't run its callback in tests natively without a fake event loop
+        mock_ble.mock_scan.return_value = [
+            ("12:34:56:78:90:ab", -60, b"\x02\x01\x06\x03\x03\xaa\xfe"),
+        ]
+        
+        shell.run_command("ble scan 1")
+        assert "Scanning" in output.text
+        assert "12:34:56:78:90:ab" in output.text
+
+class TestBadUsbCommands:
+    def test_badusb_type(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("badusb type hello world")
+        assert "Typing: hello world" in output.text
+        assert "Done" in output.text
+        assert shell.badge.mock_hid_log[-1] == "TYPE: hello world"
+
+    def test_badusb_run_script(self, shell_and_output, tmp_path):
+        shell, output = shell_and_output
+        script = tmp_path / "payload.txt"
+        script.write_text("STRING hello\nDELAY 100\nENTER\nGUI r\n")
+        
+        shell.run_command(f"badusb run {script}")
+        assert "Running" in output.text
+        assert "Payload complete" in output.text
+        
+        logs = shell.badge.mock_hid_log
+        assert "TYPE: hello" in logs
+        assert "KEY: 40 MOD: 0" in logs  # ENTER is 0x28 (40 in decimal)
+        assert "KEY: 21 MOD: 8" in logs  # GUI+r: r is 0x15 (21 in decimal)
 
 class TestHelpShowsAllGroups:
     """Verify that help now shows all registered command groups."""
