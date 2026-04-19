@@ -14,6 +14,7 @@ try:
     from apps.peers_app import PeersApp
     from apps.net_tools import NetTools
     from apps.badgeshark import BadgeShark
+    from apps.serial_terminal import SerialTerminalApp
 except Exception as ex:
     # If anything goes wrong at import time, wait a second and print it
     # Sometimes these are hard to see, so the delay and extra print may help
@@ -35,6 +36,7 @@ async def main():
         chat.ChatApp("Chat", badge),
         talks.Talks("Talks", badge),
         nametag.App("Nametag", badge),
+        SerialTerminalApp("Terminal", badge),
         user_app_manager,
         config_manager.ConfigManager("Config", badge),
     ]

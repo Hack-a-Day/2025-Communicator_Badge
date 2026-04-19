@@ -367,8 +367,14 @@ class Shell:
         from .commands.log_cmd import LogCommands
 
         # Peripheral / Hardware commands
-        from .commands.lora_cmd import LoraCommands
+        from .commands.storage_cmd import StorageCommands
+        from .commands.loader_cmd import LoaderCommands
+        from .commands.power_cmd import PowerCommands
         from .commands.subghz_cmd import SubGhzCommands
+        from .commands.badusb_cmd import BadUsbCommands
+        from .commands.uart_cmd import UartCommands
+        # from .commands.wardriving_cmd import WardrivingCommands
+        from .commands.lora_cmd import LoraCommands
         from .commands.wifi_cmd import WifiCommands
         from .commands.ble_cmd import BleCommands
         from .commands.net_cmd import NetCommands
@@ -378,12 +384,10 @@ class Shell:
         from .commands.chat_cmd import ChatCommands
         from .commands.peers_cmd import PeersCommands
         from .commands.talks_cmd import TalksCommands
-        from .commands.badusb_cmd import BadUsbCommands
         from .commands.crypto_cmd import CryptoCommands
         from .commands.ctf_cmd import CTFCommands
         from .commands.poll_cmd import PollCommands
         from .commands.nametag_cmd import NametagCommands
-        from .commands.loader_cmd import LoaderCommands
 
         # Instantiate (these auto-register via self.shell.register_group/command)
         MetaCommands(self)
@@ -394,16 +398,15 @@ class Shell:
         LogCommands(self)
 
         LoraCommands(self)
-        SubGhzCommands(self)
-        WifiCommands(self)
-        BleCommands(self)
-        NetCommands(self)
+        self.subghz_cmds = SubGhzCommands(self)
+        self.badusb_cmds = BadUsbCommands(self)
+        self.uart_cmds = UartCommands(self)
+        # self.wardriving_cmds = WardrivingCommands(self)
         HardwareCommands(self)
 
         ChatCommands(self)
         PeersCommands(self)
         TalksCommands(self)
-        BadUsbCommands(self)
         CryptoCommands(self)
         CTFCommands(self)
         PollCommands(self)
