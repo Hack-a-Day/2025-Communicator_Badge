@@ -45,7 +45,13 @@ class BleCommands:
                 ble.gap_scan(timeout_sec * 1000, 30000, 30000)
                 
                 # Wait for scan to finish
-                time.sleep(timeout_sec + 0.5)
+                start_scan = time.time()
+                while time.time() - start_scan < timeout_sec + 0.5:
+                    if self.shell.check_interrupt():
+                        ble.gap_scan(None)  # Stop scan
+                        w("Interrupted.")
+                        break
+                    time.sleep(0.1)
             elif hasattr(ble, "mock_scan"):
                 devices = ble.mock_scan(timeout_sec)
             

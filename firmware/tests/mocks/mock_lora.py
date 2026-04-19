@@ -28,7 +28,11 @@ class MockLoraRadio:
         self.radio = None  # No real radio hardware
         self.fake_rx_buffer = deque([], 3)
 
-    def get_rssi(self):
+    def get_rssi(self, freq=None):
+        if freq is not None:
+            # Simulate some noise/peaks for the scanner
+            import math
+            return -100 + 30 * math.sin(freq * 0.5)
         return self.last_rssi
 
     def get_snr(self):

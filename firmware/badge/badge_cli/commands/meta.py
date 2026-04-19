@@ -36,6 +36,8 @@ class MetaCommands:
         shell.register_command("sleep", self._cmd_sleep, "Delay N[ms|s] (Ctrl+C to abort)")
         shell.register_command("neofetch", self._cmd_neofetch, "System info with ASCII art")
         shell.register_command("factory_reset", self._cmd_factory_reset, "Erase config and reboot")
+        shell.register_command("batch", self._cmd_batch, "Run CLI script: batch <file>")
+        shell.register_command("history", self._cmd_history, "Show command history")
 
     def _cmd_help(self, args):
         """List all available commands and command groups."""
@@ -305,3 +307,32 @@ class MetaCommands:
             machine.reset()
         except ImportError:
             w("(machine.reset() not available on this platform)")
+
+    def _cmd_batch(self, args):
+        """Run a sequence of CLI commands from a file."""
+        w = self.shell._write
+        if not args:
+            w("Usage: batch <filename.cli>")
+            return
+            
+        filename = args[0]
+        try:
+            with open(filename, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    w(f"> {line}")
+                    self.shell.run_command(line)
+        except OSError:
+            w(f"Error: Could not read {filename}")
+
+    def _cmd_history(self, args):
+        """Show command history."""
+        w = self.shell._write
+        if not self.shell._history:
+            w("No history.")
+            return
+            
+        for i, cmd in enumerate(self.shell._history):
+            w(f"{i+1:3}  {cmd}")

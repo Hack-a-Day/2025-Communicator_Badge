@@ -24,6 +24,7 @@ class CliApp(BaseApp):
         self.poll = select.poll()
         self.poll.register(self.stdin, select.POLLIN)
         self.shell = Shell(badge, write_func=self.stdout.write)
+        self.shell.check_interrupt_func = self.run_background
         self._line_buf = ""
         self._cli_mode = True  # True = CLI mode, False = passthrough (UsbDebug compat)
         self._started = False
@@ -70,6 +71,7 @@ class CliApp(BaseApp):
     def _handle_cli_input(self, ch):
         """Handle input in CLI mode — build lines, dispatch on Enter."""
         self.show_ui_feedback()
+        
         if ch in ("\r", "\n"):
             # Echo the newline
             self.stdout.write("\r\n")
@@ -81,13 +83,44 @@ class CliApp(BaseApp):
             if self._line_buf:
                 self._line_buf = self._line_buf[:-1]
                 self.stdout.write("\x08 \x08")  # Erase character on terminal
+        elif ch == "\t":  # Tab completion
+            matches = self.shell.complete(self._line_buf)
+            if len(matches) == 1:
+                # Complete the line
+                self._clear_current_line()
+                self._line_buf = matches[0]
+                self.stdout.write(self._line_buf)
+            elif len(matches) > 1:
+                # Show matches
+                self.stdout.write("\r\n" + "  ".join(matches) + "\r\n")
+                self.shell._prompt()
+                self.stdout.write(self._line_buf)
         elif ch == "\x1b":
-            # Escape sequence start — read more chars for arrow keys etc.
-            # For now, ignore escape sequences in CLI mode
-            pass
+            # Start of escape sequence
+            self._esc_buf = "["
+        elif getattr(self, "_esc_buf", "") == "[":
+            if ch == "[": return # Skip second [ if it happens
+            if ch == "A": # Up
+                self._line_buf = self.shell.get_history_nav("up", self._line_buf)
+                self._redraw_line()
+            elif ch == "B": # Down
+                self._line_buf = self.shell.get_history_nav("down", self._line_buf)
+                self._redraw_line()
+            self._esc_buf = ""
         elif ord(ch) >= 32:  # Printable character
             self._line_buf += ch
             self.stdout.write(ch)  # Echo
+
+    def _clear_current_line(self):
+        """Erase the current line on the terminal."""
+        # Move to start of line, erase to end
+        self.stdout.write("\r" + " " * (len(self._line_buf) + 10) + "\r")
+        self.shell._prompt()
+
+    def _redraw_line(self):
+        """Redraw the prompt and current buffer."""
+        self._clear_current_line()
+        self.stdout.write(self._line_buf)
 
     def _handle_passthrough(self, ch):
         """Handle input in passthrough mode (UsbDebug compatibility).

@@ -13,13 +13,16 @@ class StorageCommands:
             {
                 "list": (self._cmd_list, "List directory: storage list [path]"),
                 "read": (self._cmd_read, "Print file contents: storage read <path>"),
-                "write": (self._cmd_write, "Write to file: storage write <path> <data>"),
-                "stat": (self._cmd_stat, "File info: storage stat <path>"),
+                "write": (self._cmd_write, "Write text to file (overwrites): storage write <path> <data...>"),
+                "append": (self._cmd_append, "Append text to file: storage append <path> <data...>"),
+                "stat": (self._cmd_stat, "File/dir info: storage stat <path>"),
                 "md5": (self._cmd_md5, "MD5 hash: storage md5 <path>"),
                 "mkdir": (self._cmd_mkdir, "Create directory: storage mkdir <path>"),
                 "remove": (self._cmd_remove, "Delete file/dir: storage remove <path>"),
                 "pull": (self._cmd_pull, "Download file as base64: storage pull <path>"),
                 "push": (self._cmd_push, "Upload file from base64: storage push <path> <b64_data>"),
+                "xsend": (self._cmd_xsend, "Send a file via XMODEM-CRC: storage xsend <path>"),
+                "xreceive": (self._cmd_xreceive, "Receive a file via XMODEM-CRC: storage xreceive <path>"),
             },
             "Flash filesystem operations"
         )
@@ -76,6 +79,21 @@ class StorageCommands:
             with open(path, "w") as f:
                 f.write(data)
             w("Wrote %d bytes to %s" % (len(data), path))
+        except OSError as e:
+            w("Error: " + str(e))
+
+    def _cmd_append(self, args):
+        """Append data to a file."""
+        w = self.shell._write
+        if len(args) < 2:
+            w("Usage: storage append <path> <data...>")
+            return
+        path = args[0]
+        data = " ".join(args[1:])
+        try:
+            with open(path, "a") as f:
+                f.write(data + "\n")
+            w("Appended %d bytes to %s" % (len(data), path))
         except OSError as e:
             w("Error: " + str(e))
 
@@ -194,3 +212,187 @@ class StorageCommands:
             w("Wrote %d bytes to %s" % (len(raw_data), path))
         except Exception as e:
             w("Error: " + str(e))
+
+    # ── XMODEM Implementation ──────────────────────────────────────────
+
+    SOH = b"\x01"
+    EOT = b"\x04"
+    ACK = b"\x06"
+    NAK = b"\x15"
+    CAN = b"\x18"
+    CRC_CHAR = b"C"
+
+    def _crc16(self, data):
+        """CRC-16-CCITT (XMODEM variant)."""
+        try:
+            import binascii
+            return binascii.crc_hqx(data, 0)
+        except:
+            # Slow fallback for environments without binascii.crc_hqx
+            crc = 0
+            for byte in data:
+                crc = crc ^ (byte << 8)
+                for _ in range(8):
+                    if crc & 0x8000:
+                        crc = (crc << 1) ^ 0x1021
+                    else:
+                        crc = crc << 1
+                    crc &= 0xFFFF
+            return crc
+
+    def _cmd_xreceive(self, args):
+        """Receive a file via XMODEM-CRC."""
+        if not args:
+            self.shell._write("Usage: storage xreceive <path>")
+            return
+        path = args[0]
+
+        try:
+            f = open(path, "wb")
+        except Exception as e:
+            self.shell._write("Error: " + str(e))
+            return
+
+        self.shell._write("Starting XMODEM-CRC receive. Start sender now...")
+        
+        expected_pkt = 1
+        errors = 0
+        max_errors = 10
+        
+        try:
+            # Initial handshaking: send 'C' every 3 seconds
+            for _ in range(10):
+                self.shell._write_raw(self.CRC_CHAR)
+                b = self.shell._read_byte(3000)
+                if b in (self.SOH, self.EOT, self.CAN):
+                    break
+            else:
+                self.shell._write("Timeout waiting for sender.")
+                f.close()
+                return
+
+            while True:
+                if b == self.SOH:
+                    # Read packet: pkt#, ~pkt#, 128 bytes, 2 bytes CRC
+                    header = self.shell._read_raw(2)
+                    if len(header) < 2:
+                        self.shell._write_raw(self.NAK)
+                        b = self.shell._read_byte(1000)
+                        continue
+                    
+                    pkt_num = header[0]
+                    pkt_inv = header[1]
+                    
+                    data = self.shell._read_raw(128)
+                    crc_bytes = self.shell._read_raw(2)
+                    
+                    if len(data) < 128 or len(crc_bytes) < 2:
+                        self.shell._write_raw(self.NAK)
+                        b = self.shell._read_byte(1000)
+                        continue
+
+                    # Verify
+                    actual_crc = self._crc16(data)
+                    expected_crc = (crc_bytes[0] << 8) | crc_bytes[1]
+                    
+                    if pkt_num == (expected_pkt & 0xFF) and (pkt_num + pkt_inv) == 0xFF and actual_crc == expected_crc:
+                        f.write(data)
+                        self.shell._write_raw(self.ACK)
+                        expected_pkt += 1
+                        errors = 0
+                    elif pkt_num == ((expected_pkt - 1) & 0xFF):
+                        # Duplicate packet (sender didn't get ACK)
+                        self.shell._write_raw(self.ACK)
+                    else:
+                        self.shell._write_raw(self.NAK)
+                        errors += 1
+                    
+                elif b == self.EOT:
+                    self.shell._write_raw(self.ACK)
+                    self.shell._write("\r\nTransfer complete.")
+                    break
+                elif b == self.CAN:
+                    self.shell._write("\r\nTransfer cancelled by sender.")
+                    break
+                else:
+                    errors += 1
+                    if errors > max_errors:
+                        self.shell._write_raw(self.CAN)
+                        self.shell._write("\r\nToo many errors, aborting.")
+                        break
+                    self.shell._write_raw(self.NAK)
+                
+                if errors > max_errors: break
+                b = self.shell._read_byte(3000)
+                if b is None:
+                    self.shell._write("\r\nTimeout waiting for packet.")
+                    break
+
+        finally:
+            f.close()
+
+    def _cmd_xsend(self, args):
+        """Send a file via XMODEM-CRC."""
+        if not args:
+            self.shell._write("Usage: storage xsend <path>")
+            return
+        path = args[0]
+
+        try:
+            f = open(path, "rb")
+        except Exception as e:
+            self.shell._write("Error: " + str(e))
+            return
+
+        self.shell._write("Waiting for receiver to send 'C'...")
+        
+        try:
+            # Wait for 'C'
+            while True:
+                b = self.shell._read_byte(1000)
+                if b == self.CRC_CHAR:
+                    break
+                if b == self.CAN:
+                    self.shell._write("Cancelled by receiver.")
+                    return
+            
+            pkt_num = 1
+            while True:
+                data = f.read(128)
+                if not data:
+                    break
+                
+                # Pad data to 128 bytes
+                if len(data) < 128:
+                    data += b"\x1a" * (128 - len(data)) # EOF char padding
+                
+                pkt = self.SOH + bytes([pkt_num & 0xFF, (0xFF - (pkt_num & 0xFF))])
+                pkt += data
+                crc = self._crc16(data)
+                pkt += bytes([(crc >> 8) & 0xFF, crc & 0xFF])
+                
+                # Send and wait for ACK
+                attempts = 0
+                while attempts < 10:
+                    self.shell._write_raw(pkt)
+                    resp = self.shell._read_byte(3000)
+                    if resp == self.ACK:
+                        pkt_num += 1
+                        break
+                    attempts += 1
+                else:
+                    self.shell._write("Failed to send packet after 10 attempts.")
+                    return
+
+            # Send EOT
+            attempts = 0
+            while attempts < 10:
+                self.shell._write_raw(self.EOT)
+                resp = self.shell._read_byte(3000)
+                if resp == self.ACK:
+                    self.shell._write("Transfer complete.")
+                    break
+                attempts += 1
+                
+        finally:
+            f.close()
