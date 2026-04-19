@@ -15,6 +15,7 @@ try:
     from apps.net_tools import NetTools
     from apps.badgeshark import BadgeShark
     from apps.serial_terminal import SerialTerminalApp
+    from apps.shell_gui import ShellGuiApp
 except Exception as ex:
     # If anything goes wrong at import time, wait a second and print it
     # Sometimes these are hard to see, so the delay and extra print may help
@@ -37,6 +38,7 @@ async def main():
         talks.Talks("Talks", badge),
         nametag.App("Nametag", badge),
         SerialTerminalApp("Terminal", badge),
+        ShellGuiApp("Shell", badge),
         user_app_manager,
         config_manager.ConfigManager("Config", badge),
     ]
