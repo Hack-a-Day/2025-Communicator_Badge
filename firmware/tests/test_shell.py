@@ -219,7 +219,7 @@ class TestNeofetchCommand:
         shell.run_command("neofetch")
         text = output.text
         assert "| |__" in text  # ASCII art contains this string
-        assert "BadgeOS" in text
+        assert "Badge CLI" in text
         assert "ESP32-S3" in text
 
     def test_neofetch_shows_radio_info(self, shell_and_output):

@@ -59,10 +59,8 @@ class MockLoraRadio:
 
     def rx_ook(self, freq, timeout_ms=1000):
         """Simulate receiving OOK data."""
-        import time
         if hasattr(self, "_ook_rx_queue") and self._ook_rx_queue:
             return self._ook_rx_queue.popleft()
-        time.sleep(timeout_ms / 1000.0)
         return None
 
     def tx_ook(self, freq, data):

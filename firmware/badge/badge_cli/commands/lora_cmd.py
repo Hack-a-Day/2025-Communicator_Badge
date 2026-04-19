@@ -74,17 +74,30 @@ class LoraCommands:
 
         try:
             # Try async send via the radio
-            import uasyncio as asyncio
-            asyncio.get_event_loop().run_until_complete(self.badge.lora.send(data))
-            w("Sent %d bytes" % len(data))
-        except ImportError:
-            # Mock / CPython fallback — call send directly if it's synchronous
             try:
+                import uasyncio as asyncio
+            except ImportError:
                 import asyncio
-                asyncio.get_event_loop().run_until_complete(self.badge.lora.send(data))
-                w("Sent %d bytes" % len(data))
-            except Exception as e:
-                w("Send error: " + str(e))
+            
+            try:
+                # Modern asyncio (Python 3.7+)
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(self.badge.lora.send(data))
+                except RuntimeError:
+                    # No loop running, start a new one
+                    asyncio.run(self.badge.lora.send(data))
+            except AttributeError:
+                # MicroPython / Older Python fallback
+                loop = asyncio.get_event_loop()
+                if hasattr(loop, 'is_running') and loop.is_running():
+                    loop.create_task(self.badge.lora.send(data))
+                else:
+                    loop.run_until_complete(self.badge.lora.send(data))
+            
+            w("Sent %d bytes" % len(data))
+        except Exception as e:
+            w("Send error: " + str(e))
 
     def _cmd_rx(self, args):
         """Receive and display decoded frames. Ctrl+C to stop.
