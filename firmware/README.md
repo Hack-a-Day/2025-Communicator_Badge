@@ -230,234 +230,32 @@ def switch_to_background(self):
 
 # Badge CLI
 
-The badge includes a **Flipper Zero-style command-line interface** accessible over USB serial. Connect at 115200 baud with any terminal (PuTTY, screen, minicom, Thonny serial console) and you'll see the CLI shell.
+The badge includes a **Flipper Zero-style command-line interface** accessible over USB serial. This provides deep access to hardware, network stack, and internal state.
 
+For full command documentation, architecture details, and testing instructions, see the [Badge CLI Documentation](badge/badge_cli/README.md).
+
+### Quick Start
+Connect at 115200 baud and type `help`.
+
+```text
+badge >: help
+Commands:
+  help                 List all commands
+  neofetch             System info with ASCII art
+  uptime               Time since boot
+  ...
+Command groups (type '<group> ?' for sub-commands):
+  lora                 SX1262 Radio control
+  net                  BadgeNet network stack
+  storage              Flash filesystem operations
+  ...
 ```
- _               _                   _ _ 
-| |__   __ _  __| | __ _  ___    ___| (_)
-| '_ \ / _` |/ _` |/ _` |/ _ \  / __| | |
-| |_) | (_| | (_| | (_| |  __/ | (__| | |
-|_.__/ \__,_|\__,_|\__, |\___|  \___|_|_|
-                   |___/         v0.1
-Type 'help' or '?' for a list of commands.
 
-badge >:
-```
-
-Type `help` to see all available commands and groups. Type `<group> ?` to see sub-commands for a group (e.g., `lora ?`).
-
-## Command Reference
-
-### Top-Level Commands
-
-| Command | Description |
-|---------|-------------|
-| `help` / `?` | List all commands and groups |
-| `!` | Alias for `info device` |
-| `echo <text>` | Echo text back |
-| `exit` | Drop to MicroPython REPL |
-| `neofetch` | System info with ASCII art |
-| `version` | Firmware version |
-| `uptime` | Time since boot |
-| `date` | Current date and time |
-| `free` | Heap memory info |
-| `free_blocks` | Heap free/alloc breakdown |
-| `top` | Running apps (Ctrl+C to stop) |
-| `sleep <N>[ms\|s]` | Delay (Ctrl+C to abort) |
-| `factory_reset confirm` | Erase config and reboot |
-| `vibro` | (Unsupported — no motor) |
-| `buzzer` | (Unsupported — no buzzer) |
-
-### `info` — System Information
-
-| Command | Description |
-|---------|-------------|
-| `info device` | Address, firmware, radio config, heap |
-| `info power` | Power info (stub — no fuel gauge) |
-
-### `config` — Badge Configuration
-
-| Command | Description |
-|---------|-------------|
-| `config list` | All key=value pairs |
-| `config get <key>` | Single value |
-| `config set <key> <val>` | Set in memory |
-| `config save` | Flush to flash |
-| `config broadcast <key> <val>` | Send signed CONFIG_OVERRIDE |
-
-### `lora` — LoRa Radio (SX1262)
-
-| Command | Description |
-|---------|-------------|
-| `lora info` | Freq slot, MHz, BW, SF, CR, TX power, RSSI, SNR |
-| `lora freq [slot]` | Get or set freq slot (1–52) |
-| `lora tx <hex>` | Transmit raw hex frame |
-| `lora rx` | Receive decoded frames (Ctrl+C to stop) |
-| `lora rx_raw` | Receive raw hex + RSSI (Ctrl+C to stop) |
-| `lora chat [slot]` | Interactive chat on channel |
-
-### `subghz` — Sub-GHz RF (OOK/FSK)
-
-| Command | Description |
-|---------|-------------|
-| `subghz rx <freq>` | Receive raw Sub-GHz (OOK) on freq |
-| `subghz tx <freq> <hex>` | Transmit raw Sub-GHz (OOK) on freq |
-
-### `wifi` — Wi-Fi Wardriving
-
-| Command | Description |
-|---------|-------------|
-| `wifi scan` | Scan and list nearby Wi-Fi networks |
-
-### `ble` — Bluetooth LE Wardriving
-
-| Command | Description |
-|---------|-------------|
-| `ble scan [timeout]` | Scan and list nearby BLE devices |
-
-### `badusb` — USB Keystroke Injection
-
-| Command | Description |
-|---------|-------------|
-| `badusb run <file>` | Run DuckyScript payload from file |
-| `badusb type <text>` | Type string directly |
-
-### `chat` — LoRa Text Chat
-
-| Command | Description |
-|---------|-------------|
-| `chat send <text>` | Send a chat message |
-| `chat history` | Show chat history for current channel |
-| `chat channel [freq] [topic]` | Get/set chat channel |
-| `chat status` | Show chat app status |
-
-### `net` — BadgeNet Network
-
-| Command | Description |
-|---------|-------------|
-| `net address` | My 4-byte hex address |
-| `net ping [addr]` | Send PING, show PONGs |
-| `net nodes` | List seen nodes |
-| `net send <port> <hex>` | Send raw payload on port |
-| `net sniff` | Promiscuous capture (Ctrl+C to stop) |
-| `net sniff --pcap <file>` | Capture and save as PCAP file |
-
-### `i2c` — SAO I2C Bus
-
-| Command | Description |
-|---------|-------------|
-| `i2c scan` | Scan SAO I2C bus for devices |
-| `i2c dump <addr> <size>` | Dump EEPROM/device data |
-
-### `gpio` — SAO GPIO Pins
-
-| Command | Description |
-|---------|-------------|
-| `gpio mode <pin> <in\|out>` | Set SAO pin direction |
-| `gpio set <pin> <0\|1>` | Set pin value |
-| `gpio read <pin>` | Read pin value |
-| `gpio logic <pin> <samples>` | Logic analyzer: capture state |
-
-Pins: `sao1` (GPIO1, Pin 7), `sao2` (GPIO2, Pin 6)
-
-### `led` — Debug LED
-
-| Command | Description |
-|---------|-------------|
-| `led set <0\|1>` | Toggle debug LED on/off |
-
-### `crypto` — RSA Operations
-
-| Command | Description |
-|---------|-------------|
-| `crypto has_key` | Check if private key exists |
-| `crypto sign <message>` | Sign with private key (hex output) |
-| `crypto verify <msg> <sig_hex>` | Verify signature |
-
-### `storage` — Flash Filesystem
-
-| Command | Description |
-|---------|-------------|
-| `storage list [path]` | List directory |
-| `storage read <path>` | Print file contents |
-| `storage write <path> <data>` | Write data to file |
-| `storage stat <path>` | File size + info |
-| `storage md5 <path>` | MD5 hash |
-| `storage mkdir <path>` | Create directory |
-| `storage remove <path>` | Delete file or empty dir |
-
-### `nametag` — Badge Identity
-
-| Command | Description |
-|---------|-------------|
-| `nametag get` | Show alias + nametag + image setting |
-| `nametag set <text>` | Set alias (max 10 chars) |
-
-### `talks` — Conference Schedule
-
-| Command | Description |
-|---------|-------------|
-| `talks list` | Full schedule |
-| `talks now` | Current + next talk |
-
-### `loader` — Application Manager
-
-| Command | Description |
-|---------|-------------|
-| `loader list` | List all registered apps with state |
-| `loader open <name>` | Bring app to foreground |
-| `loader info` | Show current foreground app |
-| `loader close` | Send foreground app to background |
-
-### `power` — Power Management
-
-| Command | Description |
-|---------|-------------|
-| `power off` | Enter deep sleep |
-| `power reboot` | Hard reset |
-
-### `ctf` — Capture-the-Flag Game
-
-| Command | Description |
-|---------|-------------|
-| `ctf host` | Start hosting CTF flag beacon |
-| `ctf stop` | Stop hosting flag |
-| `ctf scan <rssi>` | Update scan, print hot/cold |
-| `ctf watch` | Continuous scan (Ctrl+C to stop) |
-| `ctf reset` | Reset scan history |
-| `ctf status` | Show CTF status and scan history |
-
-### `poll` — Polling System
-
-| Command | Description |
-|---------|-------------|
-| `poll new "Q" opt1 opt2 ...` | Create poll |
-| `poll vote <id> <idx>` | Cast vote |
-| `poll results <id>` | Show results with bar charts |
-| `poll list` | List all polls |
-
-### `peers` — Peer Tracking
-
-| Command | Description |
-|---------|-------------|
-| `peers list` | Known peers (addr, RSSI, SNR, last_seen) |
-| `peers nearest` | Closest peer by RSSI |
-| `peers clear` | Forget all peers |
-
-### `log` — System Log
-
-| Command | Description |
-|---------|-------------|
-| `log debug\|info\|warn\|error` | Stream log at level |
-| `log stop` | Stop streaming |
-
-## CLI Testing
-
-The CLI has a full CPython test suite that runs without badge hardware:
+### CLI Testing
+The CLI has a full CPython test suite and HITL (Hardware-In-The-Loop) framework.
 ```bash
 cd firmware/
-pip install pytest
-python -m pytest tests/ -v
+python -m pytest tests/ -v --hitl-port mock
 ```
 
 # Badge Firmware Development

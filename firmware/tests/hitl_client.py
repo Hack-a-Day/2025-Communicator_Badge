@@ -25,28 +25,35 @@ class BadgeSerialClient(BaseCLIClient):
         self.baudrate = baudrate
         self.timeout = timeout
         self.ser = None
-        self._prompt = "badge >:"
+        self._prompt = "badge >: " # Added space to match Shell._prompt()
         
     def connect(self):
         self.ser = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
-        time.sleep(0.5)
+        time.sleep(1.0) # Increased wait for boot/connect
         self.ser.reset_input_buffer()
         self.ser.write(b"\r\n")
         out = self._read_until_prompt()
         if self._prompt not in out:
+            # Try Ctrl+C to break any running app
             self.ser.write(b"\x03")
-            time.sleep(0.1)
+            time.sleep(0.2)
             self.ser.write(b"\r\n")
             out += self._read_until_prompt()
             if self._prompt not in out:
-                raise TimeoutError(f"Could not synchronize with CLI prompt on {self.port}")
+                 # One last try: send 'exit' just in case we are in a sub-app
+                self.ser.write(b"exit\r\n")
+                time.sleep(0.5)
+                out += self._read_until_prompt()
+                if self._prompt not in out:
+                    raise TimeoutError(f"Could not synchronize with CLI prompt on {self.port}. Got: {out!r}")
                 
     def disconnect(self):
         if self.ser and self.ser.is_open:
             self.ser.close()
             
     def _read_until_prompt(self, timeout=None):
-        end_time = time.time() + (timeout if timeout is not None else self.timeout)
+        tout = timeout if timeout is not None else self.timeout
+        end_time = time.time() + tout
         output = ""
         while time.time() < end_time:
             if self.ser.in_waiting > 0:
@@ -58,13 +65,22 @@ class BadgeSerialClient(BaseCLIClient):
                 time.sleep(0.01)
         return output
 
-    def run_command(self, cmd, timeout=2.0):
+    def run_command(self, cmd, timeout=5.0): # Default timeout increased for real hardware
         self.ser.reset_input_buffer()
+        # Ensure command is sent cleanly
         self.ser.write(f"{cmd}\r\n".encode('utf-8'))
         output = self._read_until_prompt(timeout)
-        output = output.replace(cmd + "\r\n", "", 1)
-        if output.endswith(self._prompt):
-            output = output[:-len(self._prompt)]
+        
+        # Clean up output
+        # Remove echo (interleaved chars might happen, but starts-with is usually safe)
+        if output.startswith(cmd):
+            output = output.split("\r\n", 1)[-1]
+        
+        # Remove prompt from end
+        if self._prompt in output:
+            idx = output.rfind(self._prompt)
+            output = output[:idx]
+            
         return output.strip()
 
 class BadgeMockClient(BaseCLIClient):
@@ -95,7 +111,13 @@ class BadgeMockClient(BaseCLIClient):
             import asyncio as aio
             
         orig_create_task = aio.create_task
-        aio.create_task = MagicMock()
+        
+        def mock_create_task(coro):
+            if hasattr(coro, "close"):
+                coro.close() # Silence 'was never awaited' warning
+            return MagicMock()
+            
+        aio.create_task = mock_create_task
         try:
             self.app.start()
         finally:
@@ -142,19 +164,16 @@ class BadgeMockClient(BaseCLIClient):
         output = "".join(self._stdout_lines)
         
         # Clean up output
-        echo_cmd = cmd + "\r\n"
-        if output.startswith(echo_cmd):
-            output = output[len(echo_cmd):]
-        elif cmd in output:
-            # Fallback if echo was slightly different
+        if output.startswith(cmd):
             output = output.split("\r\n", 1)[-1]
+        elif cmd in output:
+            output = output.replace(cmd, "", 1).strip("\r\n")
             
         if target_prompt in output:
             idx = output.rfind(target_prompt)
             output = output[:idx]
             
         if not found_prompt and iters >= max_iters:
-             # Check for common error indicators
              if "Error:" in output or "Unknown command:" in output:
                  return output.strip()
              return f"ERROR: Timeout. iters={iters} output={output!r}"
