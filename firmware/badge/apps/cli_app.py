@@ -16,12 +16,14 @@ from badge_cli.shell import Shell
 class CliApp(BaseApp):
     """Background app that serves the Badge CLI over USB serial."""
 
-    def __init__(self, name, badge):
+    def __init__(self, name, badge, stdin=None, stdout=None):
         super().__init__(name, badge)
         self.background_sleep_ms = 20
+        self.stdin = stdin or sys.stdin
+        self.stdout = stdout or sys.stdout
         self.poll = select.poll()
-        self.poll.register(sys.stdin, select.POLLIN)
-        self.shell = Shell(badge)
+        self.poll.register(self.stdin, select.POLLIN)
+        self.shell = Shell(badge, write_func=self.stdout.write)
         self._line_buf = ""
         self._cli_mode = True  # True = CLI mode, False = passthrough (UsbDebug compat)
         self._started = False
@@ -42,7 +44,7 @@ class CliApp(BaseApp):
         events = self.poll.poll(0)
         if events:
             try:
-                return sys.stdin.read(1)
+                return self.stdin.read(1)
             except UnicodeError:
                 pass
         return ""
@@ -70,7 +72,7 @@ class CliApp(BaseApp):
         self.show_ui_feedback()
         if ch in ("\r", "\n"):
             # Echo the newline
-            sys.stdout.write("\r\n")
+            self.stdout.write("\r\n")
             if self._line_buf:
                 self.shell.run_command(self._line_buf)
                 self._line_buf = ""
@@ -78,14 +80,14 @@ class CliApp(BaseApp):
         elif ch == "\x7f" or ch == "\x08":  # Backspace / Delete
             if self._line_buf:
                 self._line_buf = self._line_buf[:-1]
-                sys.stdout.write("\x08 \x08")  # Erase character on terminal
+                self.stdout.write("\x08 \x08")  # Erase character on terminal
         elif ch == "\x1b":
             # Escape sequence start — read more chars for arrow keys etc.
             # For now, ignore escape sequences in CLI mode
             pass
         elif ord(ch) >= 32:  # Printable character
             self._line_buf += ch
-            sys.stdout.write(ch)  # Echo
+            self.stdout.write(ch)  # Echo
 
     def _handle_passthrough(self, ch):
         """Handle input in passthrough mode (UsbDebug compatibility).

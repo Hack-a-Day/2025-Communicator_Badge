@@ -12,6 +12,37 @@ import pytest
 # badge_cli and apps modules as if running on the badge
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "badge"))
 
+def pytest_addoption(parser):
+    """Add custom command line options for HITL testing."""
+    parser.addoption(
+        "--hitl-port", 
+        action="store", 
+        default=None, 
+        help="Serial port for physical hardware-in-the-loop tests (e.g., COM3, /dev/ttyUSB0)"
+    )
+
+@pytest.fixture(scope="function")
+def hitl_badge(request):
+    """Fixture that connects to physical hardware or simulates it."""
+    port = request.config.getoption("--hitl-port")
+    if not port:
+        pytest.skip("Skipping HITL test: no --hitl-port specified")
+        
+    from tests.hitl_client import BadgeSerialClient, BadgeMockClient
+    if port.lower() == "mock":
+        from tests.mocks.mock_badge import MockBadge
+        badge = MockBadge()
+        client = BadgeMockClient(badge)
+    else:
+        # Serial port client can be session-scoped in theory, 
+        # but we use function scope for consistency here.
+        client = BadgeSerialClient(port)
+        
+    client.connect()
+    yield client
+    client.disconnect()
+
+
 # Mock hardware modules that don't exist in CPython
 from unittest.mock import MagicMock
 mock_machine = MagicMock()
