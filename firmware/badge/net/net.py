@@ -16,8 +16,12 @@ from net.protocols import (
     CHECKSUM_OFFSET,
 )
 
-# For an event the size of supercon, there's ~50% chance of address collision with a 2-byte address. 4 is virtually 0.
-MY_ADDRESS = int.from_bytes(machine.unique_id()[2:6], "big")
+try:
+    # For an event the size of supercon, there's ~50% chance of address collision with a 2-byte address. 4 is virtually 0.
+    MY_ADDRESS = int.from_bytes(machine.unique_id()[2:6], "big")
+except (AttributeError, IndexError, TypeError):
+    # Fallback for mock/test environments
+    MY_ADDRESS = 0xDEADC0DE
 BROADCAST_ADDRESS = 0xFFFFFFFF  # Broadcast address for all nodes
 RECENT_MESSAGE_EXPIRATION_S = 6000
 
