@@ -18,6 +18,8 @@ class StorageCommands:
                 "md5": (self._cmd_md5, "MD5 hash: storage md5 <path>"),
                 "mkdir": (self._cmd_mkdir, "Create directory: storage mkdir <path>"),
                 "remove": (self._cmd_remove, "Delete file/dir: storage remove <path>"),
+                "pull": (self._cmd_pull, "Download file as base64: storage pull <path>"),
+                "push": (self._cmd_push, "Upload file from base64: storage push <path> <b64_data>"),
             },
             "Flash filesystem operations"
         )
@@ -144,4 +146,51 @@ class StorageCommands:
                 os.remove(path)
             w("Removed: " + path)
         except OSError as e:
+            w("Error: " + str(e))
+
+    def _cmd_pull(self, args):
+        """Download file as base64 to serial terminal."""
+        w = self.shell._write
+        if not args:
+            w("Usage: storage pull <path>")
+            return
+        path = args[0]
+        try:
+            try:
+                import ubinascii as binascii
+            except ImportError:
+                import binascii
+            
+            with open(path, "rb") as f:
+                while True:
+                    chunk = f.read(45) # 45 bytes encodes cleanly to 60 base64 chars
+                    if not chunk:
+                        break
+                    w(binascii.b2a_base64(chunk).decode('ascii').strip())
+            w("") # Add newline at end
+        except OSError as e:
+            w("Error: " + str(e))
+
+    def _cmd_push(self, args):
+        """Upload file from base64 data.
+        
+        Usage: storage push <path> <b64_data>
+        """
+        w = self.shell._write
+        if len(args) < 2:
+            w("Usage: storage push <path> <b64_data>")
+            return
+        path = args[0]
+        b64_data = "".join(args[1:])
+        try:
+            try:
+                import ubinascii as binascii
+            except ImportError:
+                import binascii
+                
+            raw_data = binascii.a2b_base64(b64_data)
+            with open(path, "wb") as f:
+                f.write(raw_data)
+            w("Wrote %d bytes to %s" % (len(raw_data), path))
+        except Exception as e:
             w("Error: " + str(e))

@@ -12,7 +12,10 @@ class HardwareCommands:
 
         shell.register_group(
             "i2c",
-            {"scan": (self._cmd_i2c_scan, "Scan SAO I2C bus for devices")},
+            {
+                "scan": (self._cmd_i2c_scan, "Scan SAO I2C bus for devices"),
+                "dump": (self._cmd_i2c_dump, "Dump EEPROM/device data: i2c dump <addr> <size>"),
+            },
             "I2C bus (SAO header)"
         )
 
@@ -22,6 +25,7 @@ class HardwareCommands:
                 "mode": (self._cmd_gpio_mode, "Set pin direction: gpio mode <pin> <in|out>"),
                 "set": (self._cmd_gpio_set, "Set pin value: gpio set <pin> <0|1>"),
                 "read": (self._cmd_gpio_read, "Read pin value: gpio read <pin>"),
+                "logic": (self._cmd_gpio_logic, "Logic analyzer: gpio logic <pin> <samples> [delay_ms]"),
             },
             "SAO GPIO pins"
         )
@@ -50,6 +54,44 @@ class HardwareCommands:
                 w("  0x%02x (%d)" % (addr, addr))
         except Exception as e:
             w("I2C scan error: " + str(e))
+
+    def _cmd_i2c_dump(self, args):
+        """Dump data from an I2C device (like an EEPROM)."""
+        w = self.shell._write
+        if len(args) < 2:
+            w("Usage: i2c dump <addr> <size_bytes>")
+            return
+            
+        try:
+            addr = int(args[0], 0)
+            size = int(args[1], 0)
+            
+            # Usually we write 0x00 to set the address pointer to 0, then read
+            try:
+                self.badge.sao_i2c.writeto(addr, b'\x00')
+            except Exception:
+                pass # Some devices don't need this or might fail, just continue
+                
+            data = self.badge.sao_i2c.readfrom(addr, size)
+            if not data:
+                w(f"No data returned from 0x{addr:02x}")
+                return
+                
+            w(f"Dump of 0x{addr:02x} ({size} bytes):")
+            
+            # Print hex dump
+            for i in range(0, len(data), 16):
+                chunk = data[i:i+16]
+                hex_str = " ".join(f"{b:02x}" for b in chunk)
+                ascii_str = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
+                w(f"{i:04x}  {hex_str:<48}  |{ascii_str}|")
+                
+        except ValueError:
+            w("Error: Address and size must be integers (hex or decimal)")
+        except AttributeError:
+            w("(I2C read/write not supported by current mock)")
+        except Exception as e:
+            w(f"Error dumping I2C: {e}")
 
     # ── GPIO ────────────────────────────────────────────────
 
@@ -135,6 +177,51 @@ class HardwareCommands:
             w("Pin %d = %d" % (pin_num, val))
         except ImportError:
             w("(machine.Pin not available on this platform)")
+
+    def _cmd_gpio_logic(self, args):
+        """Simple logic analyzer: capture pin states."""
+        w = self.shell._write
+        if len(args) < 2:
+            w("Usage: gpio logic <pin> <samples> [delay_ms]")
+            return
+            
+        pin_num = self._resolve_pin(args[0])
+        if pin_num is None:
+            w("Unknown pin: " + args[0])
+            return
+            
+        try:
+            samples = int(args[1])
+            delay_ms = int(args[2]) if len(args) > 2 else 10
+            
+            from machine import Pin
+            p = Pin(pin_num, Pin.IN)
+            
+            w(f"Capturing {samples} samples on pin {pin_num} (delay {delay_ms}ms)...")
+            results = []
+            
+            import time
+            for _ in range(samples):
+                results.append(p.value())
+                time.sleep(delay_ms / 1000.0)
+                
+            w("Capture complete.")
+            
+            # Draw waveform
+            w("Waveform:")
+            waveform = "".join("‾" if v else "_" for v in results)
+            w(waveform)
+            
+            # Print sequence
+            seq = "".join(str(v) for v in results)
+            w(f"Sequence: {seq}")
+            
+        except ImportError:
+            w("(machine.Pin not available on this platform)")
+        except ValueError:
+            w("Error: samples and delay must be integers")
+        except Exception as e:
+            w("Error: " + str(e))
 
     # ── LED ─────────────────────────────────────────────────
 

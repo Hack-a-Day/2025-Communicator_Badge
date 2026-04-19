@@ -247,3 +247,19 @@ class TestBangCommand:
         shell.run_command("!")
         # At this point, 'info' group isn't registered, so we expect unknown
         assert "Unknown" in output.text or "info" in output.text.lower()
+
+
+class TestCliApp:
+    """Test the CliApp background runner."""
+
+    def test_cli_app_ui_feedback(self):
+        from apps.cli_app import CliApp
+        from tests.mocks.mock_badge import MockBadge
+        
+        badge = MockBadge()
+        app = CliApp("CLI", badge)
+        
+        # Test that entering a character triggers UI feedback
+        app._handle_cli_input("a")
+        
+        assert badge.display.cli_active_shown is True

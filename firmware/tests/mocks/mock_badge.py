@@ -25,6 +25,18 @@ class MockI2C:
         """Test helper: add a fake I2C device."""
         self._devices.append(addr)
 
+    def readfrom(self, addr, nbytes):
+        """Test helper: simulate reading bytes from an I2C device."""
+        if addr in self._devices:
+            # Return some fake EEPROM data (a repeating pattern)
+            return bytes([i % 256 for i in range(nbytes)])
+        raise OSError("I2C bus error")
+
+    def writeto(self, addr, buf):
+        """Test helper: simulate writing to an I2C device."""
+        if addr not in self._devices:
+            raise OSError("I2C bus error")
+
 
 class MockKeyboard:
     """Fake keyboard."""
@@ -46,10 +58,16 @@ class MockKeyboard:
 
 
 class MockDisplay:
-    """Fake display — CLI should never touch this."""
+    """Fake display — CLI should never touch this directly, except for simple UI overlays."""
+
+    def __init__(self):
+        self.cli_active_shown = False
 
     def clear(self):
         pass
+
+    def show_cli_active(self):
+        self.cli_active_shown = True
 
 
 class MockBadge:

@@ -296,6 +296,32 @@ Type `help` to see all available commands and groups. Type `<group> ?` to see su
 | `lora rx_raw` | Receive raw hex + RSSI (Ctrl+C to stop) |
 | `lora chat [slot]` | Interactive chat on channel |
 
+### `subghz` — Sub-GHz RF (OOK/FSK)
+
+| Command | Description |
+|---------|-------------|
+| `subghz rx <freq>` | Receive raw Sub-GHz (OOK) on freq |
+| `subghz tx <freq> <hex>` | Transmit raw Sub-GHz (OOK) on freq |
+
+### `wifi` — Wi-Fi Wardriving
+
+| Command | Description |
+|---------|-------------|
+| `wifi scan` | Scan and list nearby Wi-Fi networks |
+
+### `ble` — Bluetooth LE Wardriving
+
+| Command | Description |
+|---------|-------------|
+| `ble scan [timeout]` | Scan and list nearby BLE devices |
+
+### `badusb` — USB Keystroke Injection
+
+| Command | Description |
+|---------|-------------|
+| `badusb run <file>` | Run DuckyScript payload from file |
+| `badusb type <text>` | Type string directly |
+
 ### `chat` — LoRa Text Chat
 
 | Command | Description |
@@ -314,12 +340,14 @@ Type `help` to see all available commands and groups. Type `<group> ?` to see su
 | `net nodes` | List seen nodes |
 | `net send <port> <hex>` | Send raw payload on port |
 | `net sniff` | Promiscuous capture (Ctrl+C to stop) |
+| `net sniff --pcap <file>` | Capture and save as PCAP file |
 
 ### `i2c` — SAO I2C Bus
 
 | Command | Description |
 |---------|-------------|
 | `i2c scan` | Scan SAO I2C bus for devices |
+| `i2c dump <addr> <size>` | Dump EEPROM/device data |
 
 ### `gpio` — SAO GPIO Pins
 
@@ -328,6 +356,7 @@ Type `help` to see all available commands and groups. Type `<group> ?` to see su
 | `gpio mode <pin> <in\|out>` | Set SAO pin direction |
 | `gpio set <pin> <0\|1>` | Set pin value |
 | `gpio read <pin>` | Read pin value |
+| `gpio logic <pin> <samples>` | Logic analyzer: capture state |
 
 Pins: `sao1` (GPIO1, Pin 7), `sao2` (GPIO2, Pin 6)
 

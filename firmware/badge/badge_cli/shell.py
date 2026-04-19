@@ -117,8 +117,14 @@ class Shell:
             handler, _ = self._commands[cmd]
             try:
                 handler(args)
-            except Exception as exc:
-                self._write("Error: " + str(exc))
+            except Exception as e:
+                try:
+                    import traceback
+                    traceback.print_exc()
+                except ImportError:
+                    import sys
+                    sys.print_exception(e)
+                self._write("Error: " + str(e))
             return
 
         # Check command groups
@@ -134,8 +140,14 @@ class Shell:
                 handler, _ = group[subcmd]
                 try:
                     handler(sub_args)
-                except Exception as exc:
-                    self._write("Error: " + str(exc))
+                except Exception as e:
+                    try:
+                        import traceback
+                        traceback.print_exc()
+                    except ImportError:
+                        import sys
+                        sys.print_exception(e)
+                    self._write("Error: " + str(e))
             else:
                 self._write("Unknown sub-command: " + cmd + " " + subcmd)
                 self._write("Type '" + cmd + " ?' for available sub-commands.")
@@ -204,6 +216,10 @@ class Shell:
         from badge_cli.commands.poll_cmd import PollCommands
         from badge_cli.commands.peers_cmd import PeersCommands
         from badge_cli.commands.chat_cmd import ChatCommands
+        from badge_cli.commands.subghz_cmd import SubGhzCommands
+        from badge_cli.commands.wifi_cmd import WifiCommands
+        from badge_cli.commands.ble_cmd import BleCommands
+        from badge_cli.commands.badusb_cmd import BadUsbCommands
 
         MetaCommands(self)
         InfoCommands(self)
@@ -222,6 +238,10 @@ class Shell:
         PollCommands(self)
         PeersCommands(self)
         ChatCommands(self)
+        SubGhzCommands(self)
+        WifiCommands(self)
+        BleCommands(self)
+        BadUsbCommands(self)
 
     # ── App discovery ─────────────────────────────────────────────────
 

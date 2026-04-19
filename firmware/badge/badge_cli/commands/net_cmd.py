@@ -133,24 +133,59 @@ class NetCommands:
         """Promiscuous packet capture. Ctrl+C to stop.
 
         Uses the same promiscuous_queue as BadgeShark.
+        Optional argument: --pcap <filename> to save capture.
         """
         w = self.shell._write
-        w("Sniffing packets... (Ctrl+C to stop)")
+        pcap_file = None
+        pcap_fd = None
+
+        if len(args) >= 2 and args[0] == "--pcap":
+            pcap_file = args[1]
+            w("Sniffing packets to PCAP %s... (Ctrl+C to stop)" % pcap_file)
+            try:
+                pcap_fd = open(pcap_file, "wb")
+                import struct
+                # PCAP global header: magic, v_maj, v_min, tz, sigfigs, snaplen, network(147=USER0)
+                global_header = struct.pack("<IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 65535, 147)
+                pcap_fd.write(global_header)
+            except Exception as e:
+                w("Error opening PCAP file: " + str(e))
+                return
+        else:
+            w("Sniffing packets... (Ctrl+C to stop)")
 
         try:
             from net.net import capture_all_packets, badgenet
             capture_all_packets(True)
         except ImportError:
             w("(BadgeNet not available)")
+            if pcap_fd:
+                pcap_fd.close()
             return
 
         self.shell._streaming = True
         count = 0
         try:
+            import time
             while self.shell._streaming:
                 while badgenet.promiscuous_queue:
                     frame = badgenet.promiscuous_queue.popleft()
                     count += 1
+                    
+                    if pcap_fd and frame.frame:
+                        try:
+                            ts_sec = int(time.time())
+                            ts_usec = 0 # MicroPython time doesn't usually give usec
+                            packet_data = frame.frame
+                            # packet header: ts_sec, ts_usec, incl_len, orig_len
+                            packet_header = struct.pack("<IIII", ts_sec, ts_usec, len(packet_data), len(packet_data))
+                            pcap_fd.write(packet_header)
+                            pcap_fd.write(packet_data)
+                            # Flush to avoid data loss if interrupted
+                            pcap_fd.flush()
+                        except Exception as e:
+                            w("PCAP write error: " + str(e))
+
                     try:
                         frame.deserialize(badgenet.protocols)
                         if frame.fields_set:
@@ -171,12 +206,16 @@ class NetCommands:
                     import uasyncio
                     uasyncio.sleep_ms(50)
                 except ImportError:
-                    import time
                     time.sleep(0.05)
         finally:
             try:
                 capture_all_packets(False)
             except Exception:
                 pass
+            if pcap_fd:
+                try:
+                    pcap_fd.close()
+                except Exception:
+                    pass
             self.shell._streaming = False
             w("Captured %d packets." % count)

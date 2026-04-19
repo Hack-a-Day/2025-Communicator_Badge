@@ -12,6 +12,36 @@ import pytest
 # badge_cli and apps modules as if running on the badge
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "badge"))
 
+# Mock hardware modules that don't exist in CPython
+from unittest.mock import MagicMock
+mock_machine = MagicMock()
+mock_machine.unique_id.return_value = b"12345678"
+sys.modules["machine"] = mock_machine
+sys.modules["lvgl"] = MagicMock()
+sys.modules["lcd_bus"] = MagicMock()
+sys.modules["ili9341"] = MagicMock()
+sys.modules["xpt2046"] = MagicMock()
+sys.modules["nv3007"] = MagicMock()
+sys.modules["task_handler"] = MagicMock()
+sys.modules["net.crypto"] = MagicMock()
+sys.modules["network"] = MagicMock()
+sys.modules["bluetooth"] = MagicMock()
+
+mock_micropython = MagicMock()
+mock_micropython.const = lambda x: x
+sys.modules["micropython"] = mock_micropython
+
+import builtins
+builtins.const = lambda x: x
+
+import select
+if not hasattr(select, "poll"):
+    class MockPoll:
+        def register(self, *args): pass
+        def poll(self, *args): return []
+    select.poll = MockPoll
+    select.POLLIN = 1
+
 from tests.mocks.mock_badge import MockBadge
 from badge_cli.shell import Shell
 
