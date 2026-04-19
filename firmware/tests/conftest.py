@@ -73,6 +73,8 @@ if not hasattr(select, "poll"):
     select.poll = MockPoll
     select.POLLIN = 1
 
+sys.modules["uselect"] = select
+
 from tests.mocks.mock_badge import MockBadge
 from badge_cli.shell import Shell
 
