@@ -6,6 +6,14 @@ try:
     from hardware.badge import Badge
     from net.net import badgenet, capture_all_packets
     from apps import app_manager, app_menu, chat, config_manager, usb_debug, nametag, talks
+
+    # Badge CLI and related apps.
+    from apps.cli_app import CliApp
+    from apps.ctf_app import CTFApp
+    from apps.poll_app import PollApp
+    from apps.peers_app import PeersApp
+    from apps.net_tools import NetTools
+    from apps.badgeshark import BadgeShark
 except Exception as ex:
     # If anything goes wrong at import time, wait a second and print it
     # Sometimes these are hard to see, so the delay and extra print may help
@@ -30,9 +38,14 @@ async def main():
         user_app_manager,
         config_manager.ConfigManager("Config", badge),
     ]
-    # These apps aren't listed in the menus, so put them here to get started below
+    # Background apps — CLI replaces UsbDebug as the serial handler
     backgrounded_apps = [
-        usb_debug.UsbDebug("USB Debug", badge),
+        CliApp("CLI", badge),
+        NetTools("Net Tools", badge),
+        BadgeShark("BadgeShark", badge),
+        CTFApp("CTF", badge),
+        PollApp("Polls", badge),
+        PeersApp("Peers", badge),
     ]
     main_menu = app_menu.AppMenu("Main", badge, primary_apps, True)
     for app in primary_apps:
@@ -46,7 +59,7 @@ async def main():
     # To capture all network packets for debugging, set to True
     capture_all_packets(False)
     print("Badge is up and running!")
-    print("If you want the Python REPL, try one Ctrl-C or one Ctrl-D")
+    print("Badge CLI is active on USB serial. Type 'help' for commands.")
 
     while True:
         await aio.sleep(60)
@@ -56,3 +69,4 @@ async def main():
 
 if __name__ == "__main__":
     aio.run(main())
+

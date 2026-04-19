@@ -1,0 +1,82 @@
+"""Pytest fixtures for Badge CLI testing.
+
+Provides a MockBadge, a Shell instance with captured output,
+and helper utilities for all test modules.
+"""
+
+import sys
+import os
+import pytest
+
+# Add the badge source directory to the Python path so we can import
+# badge_cli and apps modules as if running on the badge
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "badge"))
+
+from tests.mocks.mock_badge import MockBadge
+from badge_cli.shell import Shell
+
+
+class CaptureOutput:
+    """Captures all output lines from the shell for test assertions.
+
+    Usage:
+        out = CaptureOutput()
+        shell = Shell(badge, write_func=out)
+        shell.run_command("help")
+        assert "help" in out.text
+    """
+
+    def __init__(self):
+        self.lines = []
+
+    def __call__(self, text):
+        self.lines.append(text)
+
+    @property
+    def text(self):
+        """All output joined as a single string."""
+        return "".join(self.lines)
+
+    @property
+    def line_list(self):
+        """Output split into individual lines (strips CRLF)."""
+        result = []
+        for chunk in self.lines:
+            for line in chunk.split("\r\n"):
+                if line:
+                    result.append(line)
+        return result
+
+    def clear(self):
+        self.lines.clear()
+
+
+@pytest.fixture
+def badge():
+    """Create a fresh MockBadge for each test."""
+    return MockBadge()
+
+
+@pytest.fixture
+def badge_with_key():
+    """Create a MockBadge that has a private key."""
+    return MockBadge(has_private_key=True)
+
+
+@pytest.fixture
+def output():
+    """Create a fresh CaptureOutput for each test."""
+    return CaptureOutput()
+
+
+@pytest.fixture
+def shell(badge, output):
+    """Create a Shell with MockBadge and CaptureOutput."""
+    return Shell(badge, write_func=output)
+
+
+@pytest.fixture
+def shell_and_output(badge, output):
+    """Return (shell, output) tuple for tests that need both."""
+    s = Shell(badge, write_func=output)
+    return s, output
