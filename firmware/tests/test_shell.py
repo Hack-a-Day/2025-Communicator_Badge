@@ -242,11 +242,11 @@ class TestBangCommand:
 
     def test_bang_dispatches_to_info_device(self, shell_and_output):
         shell, output = shell_and_output
-        # ! should try to run "info device". Since info group isn't registered
-        # yet in Phase 1, it should say "Unknown command: info"
+        # ! should try to run "info device"
         shell.run_command("!")
-        # At this point, 'info' group isn't registered, so we expect unknown
-        assert "Unknown" in output.text or "info" in output.text.lower()
+        # If info group is registered (standard), it should show Address or similar
+        # If not (e.g. minimal shell), it says Unknown
+        assert "Address" in output.text or "Unknown" in output.text
 
 
 class TestCliApp:

@@ -19,6 +19,8 @@ class StorageCommands:
                 "md5": (self._cmd_md5, "MD5 hash: storage md5 <path>"),
                 "mkdir": (self._cmd_mkdir, "Create directory: storage mkdir <path>"),
                 "remove": (self._cmd_remove, "Delete file/dir: storage remove <path>"),
+                "cd": (self._cmd_cd, "Change directory: storage cd [path]"),
+                "pwd": (self._cmd_pwd, "Print working directory: storage pwd"),
                 "pull": (self._cmd_pull, "Download file as base64: storage pull <path>"),
                 "push": (self._cmd_push, "Upload file from base64: storage push <path> <b64_data>"),
                 "xsend": (self._cmd_xsend, "Send a file via XMODEM-CRC: storage xsend <path>"),
@@ -27,10 +29,20 @@ class StorageCommands:
             "Flash filesystem operations"
         )
 
+    def _get_abs_path(self, path):
+        """Convert a relative or absolute path to an absolute one based on CWD."""
+        # Absolute paths start with / or C: (for Windows tests)
+        if path.startswith("/") or (len(path) > 1 and path[1] == ":"):
+            return path.replace("\\", "/")
+        cwd = self.shell.cwd.rstrip("/")
+        if not path:
+            return cwd if cwd else "/"
+        return (cwd + "/" + path).replace("//", "/").replace("\\", "/")
+
     def _cmd_list(self, args):
         """List directory contents."""
         w = self.shell._write
-        path = args[0] if args else "/"
+        path = self._get_abs_path(args[0] if args else "")
         try:
             entries = os.listdir(path)
             entries.sort()
@@ -55,7 +67,7 @@ class StorageCommands:
         if not args:
             w("Usage: storage read <path>")
             return
-        path = args[0]
+        path = self._get_abs_path(args[0])
         try:
             with open(path, "r") as f:
                 for line in f:
@@ -73,7 +85,7 @@ class StorageCommands:
         if len(args) < 2:
             w("Usage: storage write <path> <data...>")
             return
-        path = args[0]
+        path = self._get_abs_path(args[0])
         data = " ".join(args[1:])
         try:
             with open(path, "w") as f:
@@ -103,7 +115,7 @@ class StorageCommands:
         if not args:
             w("Usage: storage stat <path>")
             return
-        path = args[0]
+        path = self._get_abs_path(args[0])
         try:
             stat = os.stat(path)
             is_dir = stat[0] & 0x4000
@@ -120,7 +132,7 @@ class StorageCommands:
         if not args:
             w("Usage: storage md5 <path>")
             return
-        path = args[0]
+        path = self._get_abs_path(args[0])
         try:
             import hashlib
             h = hashlib.md5()
@@ -142,9 +154,10 @@ class StorageCommands:
         if not args:
             w("Usage: storage mkdir <path>")
             return
+        path = self._get_abs_path(args[0])
         try:
-            os.mkdir(args[0])
-            w("Created: " + args[0])
+            os.mkdir(path)
+            w("Created: " + path)
         except OSError as e:
             w("Error: " + str(e))
 
@@ -154,7 +167,7 @@ class StorageCommands:
         if not args:
             w("Usage: storage remove <path>")
             return
-        path = args[0]
+        path = self._get_abs_path(args[0])
         try:
             stat = os.stat(path)
             is_dir = stat[0] & 0x4000
@@ -165,6 +178,25 @@ class StorageCommands:
             w("Removed: " + path)
         except OSError as e:
             w("Error: " + str(e))
+
+    def _cmd_pwd(self, args):
+        """Print working directory."""
+        self.shell._write(self.shell.cwd)
+
+    def _cmd_cd(self, args):
+        """Change directory."""
+        w = self.shell._write
+        path = self._get_abs_path(args[0] if args else "/")
+        
+        # Check if path is a directory
+        try:
+            stat = os.stat(path)
+            if not (stat[0] & 0x4000):
+                w("Not a directory: " + path)
+                return
+            self.shell.cwd = path
+        except OSError:
+            w("No such directory: " + path)
 
     def _cmd_pull(self, args):
         """Download file as base64 to serial terminal."""
