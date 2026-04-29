@@ -1,4 +1,4 @@
-# App to load talks from CSV. All blame goes to Tom Nardi
+"""App to load talks from CSV. All blame goes to Tom Nardi"""
 
 import uasyncio as aio  # type: ignore
 
@@ -7,7 +7,7 @@ from apps.base_app import BaseApp
 # from net.net import register_receiver, send, BROADCAST_ADDRESS
 # from net.protocols import Protocol, NetworkFrame
 from ui.talk import Talk
-from ui.talk import INTEREST_LEVELS
+from ui.talk import INTEREST_LEVELS, INTEREST_INCREMENT
 import gc
 
 
@@ -25,13 +25,9 @@ class talk:
 
 
 class Talks(BaseApp):
-    """Define a new app to run on the badge."""
+    """Display schedule of conference talks"""
 
     def __init__(self, name: str, badge):
-        """Define any attributes of the class in here, after super().__init__() is called.
-        self.badge will be available in the rest of the class methods for accessing the badge hardware.
-        If you don't have anything else to add, you can delete this method.
-        """
         super().__init__(name, badge)
 
         # Location of headshots
@@ -50,8 +46,7 @@ class Talks(BaseApp):
         # Run at startup
         super().start()
         self.load_talks()
-    
-    
+
     def load_talks(self):
         # Load data from file
         # talks = []
@@ -62,7 +57,7 @@ class Talks(BaseApp):
                 for line in interests_lines:
                     interests_entries.append(line.strip().split("$"))
                 print("Successfully processed 'schedule-interests.csv'.")
-        except:
+        except Exception:
             print("Failed to open 'schedule-interests.csv'. Will auto-generate a new one.")
         
         with open("schedule.csv", "r") as schedule:
@@ -87,8 +82,7 @@ class Talks(BaseApp):
                         current_interest,
                     )
                     self.talks.append(new_talk)
-    
-    
+
     def update_talk_interest(self, talk_index, day_index, stage_index, interest):
         print(f"Updating talk interest #{talk_index} for day {day_index} on stage index {stage_index} with interest level == {interest}")
         match_counter = -1
@@ -98,19 +92,18 @@ class Talks(BaseApp):
                 if match_counter == talk_index:
                     print(f"Potential match: {talk.day} {talk.stage} {talk_index} {match_counter}")
                     talk.interest = interest
-    
-    
+
     def save_talk_interests(self):
-        print(f"Updating conference taslk CSV file with user interest preferences")
+        print("Updating conference taslk CSV file with user interest preferences")
         with open("data/schedule-interests.csv", "w") as schedule_interests:
             for talk in self.talks:
                 schedule_interests.write(f"{talk.title}${talk.interest}\n")
-    
-    
+
     def run_foreground(self):
         gc.collect()
         # Handle user input
-        if self.badge.keyboard.f1():
+        increment_interest = False
+        if self.badge.keyboard.f1():  # Day
             self.talk_changed = True
             self.talk_index = 0
             if self.day_index == "SAT":
@@ -118,14 +111,10 @@ class Talks(BaseApp):
             else:
                 self.day_index = "SAT"
 
-        elif self.badge.keyboard.f2():
+        elif self.badge.keyboard.f2():  # Interest
+            increment_interest = True
             self.talk_changed = True
-            self.talk_index = 0
-            if self.stage_index == "LACM":
-                self.stage_index = "DSLB"
-            else:
-                self.stage_index = "LACM"
-        
+
         else:
             key = self.badge.keyboard.read_key()
             if key is not None:
@@ -170,6 +159,8 @@ class Talks(BaseApp):
         # Update if changed
         if self.talk_changed:
             print(current_talk.image)
+            if increment_interest:
+                current_talk.interest = INTEREST_INCREMENT[int(current_talk.interest)]
             self.page.update(
                 talk_dict={
                     "speaker": current_talk.speaker,
@@ -214,7 +205,7 @@ class Talks(BaseApp):
                 "abstract": current_talk.desc,
                 "interest": current_talk.interest,
             },
-            menubar_labels=("Day", "Stage", "Prev", "Next", "Home"),
+            menubar_labels=("Day", "Interest", "Prev", "Next", "Home"),
         )
         """ 
         self.page = Talk(talk_dict = { "speaker":"Bob Hickman", "headshot":"images/headshots/hickman.png",

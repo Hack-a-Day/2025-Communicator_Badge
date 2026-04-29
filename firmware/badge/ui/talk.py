@@ -1,5 +1,5 @@
 import gc
-import lvgl 
+import lvgl
 from ui import graphics
 from ui import styles
 from micropython import const
@@ -7,6 +7,7 @@ from ui.page import Page
 
 
 INTEREST_LEVELS = {"UNKNOWN": 0, "ATTEND": 1, "MAYBE": 2, "SKIP": 3}
+INTEREST_INCREMENT = {0: 1, 1: 2, 2: 3, 3: 1}
 
 
 class Talk(Page):
@@ -63,7 +64,7 @@ class Talk(Page):
         self.abstract_ta.set_style_text_font(lvgl.font_montserrat_12, 0)
         self.abstract_ta.set_size(300,80)
         self.abstract_ta.set_text(talk_dict["abstract"])
-        
+
         self.apply_interest_coloring(talk_dict)
 
 
