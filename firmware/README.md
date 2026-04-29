@@ -303,24 +303,13 @@ scripts/update.py pull
 
 To make a new App, start by copying `apps/template_app.py` and giving the copy a new name. You will also want to rename the class inside it. Read the docstrings for the included methods, and refer to the above guide for how to use each method. Methods you don't need to customize the behavior of can be deleted from your file.
 
-After creating a new App file, you will need to import it and load it into the `AppMenu`. Lets say your file is named `my_app.py` and the class inside is named `MyApp`. Open `main.py`:
-```python
-# Add the import inside the try:
-try:
-    # Other imports here
-    from apps import your_app_filename
+Thanks to the `AppManager`, moving your new app file into `apps/` is all you need to do to get your new app loaded. Select `Apps` (`FN4`) to see the user-added apps, and run yours. The name it will use in the menu will be one of the following (in decreasing order of precedence):
 
-except Exception as ex:
-    # Exception handling here
-```
+* The file sets a variable `APP_NAME` with a string of the name to display.
+* The app class name (subclassed from `BaseApp`).
+* The file name (if the app class name is `App`).
 
-Construct your app, and add it into the `user_apps` menu list. The first argument should be a short string to name the App, and will be how it appears in the `AppMenu` above the Function key. The second argument must be `badge`, so your app will have easy access to the `Badge`.
-```python
-users_apps = [
-    my_app.MyApp("My App", badge),
-    # other apps
-]
-```
+Try to keep the names to 9 characters or fewer so all the names fit together well above the buttons.
 
 ## REPL and debugging on the badge
 

@@ -18,7 +18,7 @@ https://docs.micropython.org/en/latest/library/struct.html
 # NEW_PROTOCOL = Protocol(port=<PORT>, name="<NAME>", structdef="!")
 
 
-class App(BaseApp):
+class UserAppA(BaseApp):
     """Define a new app to run on the badge."""
 
     def __init__(self, name: str, badge):
