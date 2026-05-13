@@ -7,7 +7,7 @@ from ui.page import Page
 
 
 INTEREST_LEVELS = {"UNKNOWN": 0, "ATTEND": 1, "MAYBE": 2, "SKIP": 3}
-INTEREST_INCREMENT = {0: 1, 1: 2, 2: 3, 3: 1}
+INTEREST_INCREMENT = {0: 1, 1: 2, 2: 3, 3: 0}
 
 
 class Talk(Page):
