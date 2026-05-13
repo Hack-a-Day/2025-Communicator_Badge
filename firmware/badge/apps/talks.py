@@ -23,7 +23,6 @@ class talk:
         self.desc = desc
         self.interest = interest
 
-
 class Talks(BaseApp):
     """Display schedule of conference talks"""
 
@@ -36,7 +35,7 @@ class Talks(BaseApp):
         # Variables to remember state
         self.talk_index = 0
         self.day_index = "SAT"
-        self.stage_index = "LACM"
+        self.stage_index = "TALK"
         self.talk_changed = False
 
         # Data structure that holds talks
@@ -134,6 +133,9 @@ class Talks(BaseApp):
                     print("Flagging as undecided")
                     self.update_talk_interest(self.talk_index, self.day_index, self.stage_index, INTEREST_LEVELS["UNKNOWN"])
                     self.talk_changed = True
+                elif key == '/':
+                    print("HACK THE PLANET!")
+                    self.badge.display.image(0, 0, "images/headshots/goldstein.jpg")                     
 
         # Find matching talks
         matching_talks = []
@@ -158,7 +160,7 @@ class Talks(BaseApp):
 
         # Update if changed
         if self.talk_changed:
-            print(current_talk.image)
+            #print(current_talk.image)
             if increment_interest:
                 current_talk.interest = INTEREST_INCREMENT[int(current_talk.interest)]
             self.page.update(
@@ -166,9 +168,7 @@ class Talks(BaseApp):
                     "speaker": current_talk.speaker,
                     "headshot": self.image_dir + current_talk.image,
                     "title": current_talk.title,
-                    "time": (current_talk.day + " " + current_talk.time)
-                    + " @ "
-                    + current_talk.stage,
+                    "time": (current_talk.day + " " + current_talk.time),
                     "abstract": current_talk.desc,
                     "interest": current_talk.interest,
                 }
@@ -192,6 +192,10 @@ class Talks(BaseApp):
     def switch_to_foreground(self):
         super().switch_to_foreground()
 
+        # Return to start of schedule
+        self.talk_index = 0
+        self.day_index = "SAT"
+
         # Load in first result in list TODO make this time sensitive
         current_talk = self.talks[0]
         self.page = Talk(
@@ -199,9 +203,7 @@ class Talks(BaseApp):
                 "speaker": current_talk.speaker,
                 "headshot": self.image_dir + current_talk.image,
                 "title": current_talk.title,
-                "time": (current_talk.day + " " + current_talk.time)
-                + " @ "
-                + current_talk.stage,
+                "time": (current_talk.day + " " + current_talk.time),
                 "abstract": current_talk.desc,
                 "interest": current_talk.interest,
             },
@@ -221,4 +223,6 @@ class Talks(BaseApp):
         If you don't have special transition logic, you can delete this method.
         """
         super().switch_to_background()
+
+
 
