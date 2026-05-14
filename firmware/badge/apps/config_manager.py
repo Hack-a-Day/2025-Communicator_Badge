@@ -87,12 +87,12 @@ class ConfigManager(BaseApp):
                 )
                 self.page.infobar_right.set_text("Go Home to Save, Reboot to Load")
                 self.edit_active = False
-            if self.badge.keyboard.f3() and self.badge.crypto.private_key is not None:  # Send override
-                key = self.config[self.cursor_pos][0]
-                value = self.page.close_text_box()
-                self._send_override(key, value)
-                self.page.infobar_right.set_text("Go Home to Save, Reboot to Load")
-                self.edit_active = False
+            # if self.badge.keyboard.f3() and self.badge.crypto.private_key is not None:  # Send override
+            #     key = self.config[self.cursor_pos][0]
+            #     value = self.page.close_text_box()
+            #     self._send_override(key, value)
+            #     self.page.infobar_right.set_text("Go Home to Save, Reboot to Load")
+            #     self.edit_active = False
         else:
             key = self.badge.keyboard.read_key()
             if key == self.badge.keyboard.UP:
@@ -117,18 +117,24 @@ class ConfigManager(BaseApp):
                     self.page.message_rows.set_cell_value(
                         self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
                     )
-            if self.badge.keyboard.f1():
-                try:
-                    int(self.config[self.cursor_pos][1])
-                    print("Not allowed to edit numeric configs, sorry")
-                    if self.badge.crypto.private_key is not None:
-                        raise ValueError(42)
-                except ValueError:
-                    self.page.create_text_box(
-                        self.config[self.cursor_pos][1],
-                        one_line=True,
+            if self.badge.keyboard.f3():
+                    self.page.scroll_up(13)
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
                     )
-                    self.edit_active = True
+                    self.cursor_pos = max(0, self.cursor_pos - 1)
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
+                    )
+            if self.badge.keyboard.f4():
+                    self.page.scroll_down(13)
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"   {self.config[self.cursor_pos][1]}"
+                    )
+                    self.cursor_pos = min(len(self.config) - 1, self.cursor_pos + 1)
+                    self.page.message_rows.set_cell_value(
+                        self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
+                    )
 
     def switch_to_foreground(self):
         self._reload_config()
@@ -142,7 +148,7 @@ class ConfigManager(BaseApp):
             self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
         )
 
-        self.page.create_menubar(["Edit", "DON'T", "CHANGE", "NUMBERS", "Home"])
+        self.page.create_menubar(["Edit", "", "Up", "Down", "Home"])
         self.page.replace_screen()
         super().switch_to_foreground()
 
