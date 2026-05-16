@@ -1,6 +1,7 @@
 """Menu system"""
 
 import lvgl
+import time
 from ui import styles
 from ui import graphics
 from ui.page import Page
@@ -50,6 +51,7 @@ class AppMenu(BaseApp):
 
         # Header message
         self.add_message("2026 Hackaday Europe\nLecco, IT")
+        self.page.create_infobar((" ", " "))
         self.page.create_menubar(self.name_list)
         self.page.replace_screen()
 
@@ -59,6 +61,10 @@ class AppMenu(BaseApp):
 
     def run_foreground(self):
         app_to_run = None
+
+        t = time.gmtime();
+        self.page.update_infobar(("", addZero(t[3]) + ':' + addZero(t[4])+ ':' + addZero(t[5])))
+
         if self.badge.keyboard.f1():
             app_to_run = self.apps[0]
         if self.badge.keyboard.f2():
@@ -93,3 +99,10 @@ class AppMenu(BaseApp):
                 )
                 self.heartbeat_print_counter = self.heartbeat_print_counter >> 4  #
             self.heartbeat_print_counter += 1
+
+
+def addZero(i):
+    if i < 10:
+        return '0' + str(i)
+    else:
+        return str(i)

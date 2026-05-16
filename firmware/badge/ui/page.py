@@ -48,6 +48,10 @@ class Page:
         self.infobar_right.align(lvgl.ALIGN.TOP_RIGHT, -10, 0)
         self.infobar_right.set_text(infobar_content[1])
 
+    def update_infobar(self, infobar_content):
+        self.infobar_left.set_text(infobar_content[0])
+        self.infobar_right.set_text(infobar_content[1])
+
     def create_content(self):
         self.content = lvgl.obj(self.flex_container)
         self.content.set_scrollbar_mode(0)
