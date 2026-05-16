@@ -66,6 +66,8 @@ class ConfigManager(BaseApp):
             self.switch_to_background()
         if self.edit_active:
             key, text = self.page.text_box_type(self.badge.keyboard)
+            key = self.badge.keyboard.read_key()
+            text = ""
             if self.config[self.cursor_pos][0] == "alias":
                 self.page.infobar_right.set_text(f"{len(text)}/10  F1 to set")
             if self.badge.keyboard.escape_pressed:
@@ -135,6 +137,9 @@ class ConfigManager(BaseApp):
                     self.page.message_rows.set_cell_value(
                         self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
                     )
+            if self.badge.keyboard.f1():
+                self.edit_active = True
+                self.page.create_text_box(self.config[self.cursor_pos][1])
 
     def switch_to_foreground(self):
         self._reload_config()
@@ -159,3 +164,4 @@ class ConfigManager(BaseApp):
         self.badge.config.flush()
         self.page = None
         super().switch_to_background()
+
