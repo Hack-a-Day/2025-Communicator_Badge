@@ -40,11 +40,12 @@ class AppManager(BaseApp):
             if not filename.endswith(".py") or filename.startswith("_"):
                 continue
             app_modname = filename.split('.')[0]
-            print(f"Checking if {app_modname} is in deny list: {APPMOD_DENYLIST}")
+            ''' Don't need to see this on every boot - Tom'''
+            '''print(f"Checking if {app_modname} is in deny list: {APPMOD_DENYLIST}")'''
             if app_modname not in APPMOD_DENYLIST:
                 app_mods.append(app_modname)
         if app_mods:
-            print(f"Found app mods: {app_mods}")
+            print(f"Found apps: {app_mods}")
             with open("/data/user_apps.py", "w") as out:
                 out.write(f"from apps import {', '.join(app_mods)}\n")
 
@@ -125,7 +126,7 @@ class AppManager(BaseApp):
         self.add_logo("images/logos/" + str(random.randrange(1, 102)) + ".png")
 
         # Header message
-        self.add_message("SUPERCON 2025\nPasadena, CA")
+        self.add_message("2026 Hackaday Europe\nLecco, IT")
         self.page.create_menubar(self.name_list)
         self.page.replace_screen()
 

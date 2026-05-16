@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# I've now realized mpremote does everything this script does and more, so it should
+# I've now realized mpremote does everything this script does and more, port, so it should
 # probably be deleted.
 
 import argparse
@@ -11,6 +11,7 @@ import pathlib
 import subprocess
 from typing import Iterable
 
+port = "a1"  ## port argument to mpremote.  a0 for /dev/ttyACM0, etc
 
 def check_path(path: str, ) -> dict[str, bytes]:
     files: dict[str, bytes] = {}
@@ -43,7 +44,7 @@ def format_recursive_path(name: str) -> str:
 
 def get_badge_files() -> dict[str, str]:
     """Get the files on the badge and their checksums."""
-    badge_files_text = subprocess.run(["mpremote", "run", "./scripts/check_filesystem.py"], capture_output=True, text=True).stdout
+    badge_files_text = subprocess.run(["mpremote", port, "run", "./scripts/check_filesystem.py"], capture_output=True, text=True).stdout
     badge_files = {}
     for line in badge_files_text.split("\n"):
         if " " in line:
@@ -74,13 +75,13 @@ if __name__ == "__main__":
             hash = local_files[name]
             if name not in badge_files and hash == "":
                 print(f"Creating directory {name}...")
-                subprocess.run(["mpremote", "mkdir", name], check=True)
+                subprocess.run(["mpremote", port, "mkdir", name], check=True)
             elif name not in badge_files or badge_files[name] != hash:
                 if name not in badge_files:
                     print(f"Creating {name}...")
                 else:
                     print(f"Updating {name}...")
-                subprocess.run(["mpremote", "cp", f"badge{name}", f":{name}"], check=True)
+                subprocess.run(["mpremote", port, "cp", f"badge{name}", f":{name}"], check=True)
             else:
                 if args.verbose:
                     print(f"{name} is up to date.")
@@ -93,17 +94,17 @@ if __name__ == "__main__":
             if badge_files[name] == "":
                 # Can't use rmdir because __pycache__ will linger
                 print(f"Removing directory {name} from badge...")
-                subprocess.run(["mpremote", "rm", "-r", name], check=True)
+                subprocess.run(["mpremote", port, "rm", "-r", name], check=True)
             else:
                 print(f"Deleting {name} from badge...")
-                subprocess.run(["mpremote", "rm", name], check=True)
+                subprocess.run(["mpremote", port, "rm", name], check=True)
 
     if args.action == "pull":
         print("Pulling files from badge...")
         badge_files = get_badge_files()
         if not os.path.exists("badge-backup"):
             os.makedirs("badge-backup")
-        file_text = subprocess.run(["mpremote", "cp", "-r", ":", "badge-backup/"], check=True)
+        file_text = subprocess.run(["mpremote", port, "cp", "-r", ":", "badge-backup/"], check=True)
         # for name in badge_files.keys():
         #     print(f"Pulling {name}...")
         #     with open(f"badge-backup/{name}", "w") as file:
@@ -136,4 +137,4 @@ if __name__ == "__main__":
 
     if args.reset:
         print("Resetting badge...")
-        subprocess.run(["mpremote", "reset"], check=True)
+        subprocess.run(["mpremote", port, "reset"], check=True)

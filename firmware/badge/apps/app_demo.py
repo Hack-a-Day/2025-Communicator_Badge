@@ -18,7 +18,7 @@ https://docs.micropython.org/en/latest/library/struct.html
 # NEW_PROTOCOL = Protocol(port=<PORT>, name="<NAME>", structdef="!")
 
 
-class UserAppD(BaseApp):
+class Demo(BaseApp):
     """Define a new app to run on the badge."""
 
     def __init__(self, name: str, badge):
@@ -94,5 +94,4 @@ class UserAppD(BaseApp):
         """
         self.p = None
         super().switch_to_background()
-
 

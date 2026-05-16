@@ -39,7 +39,7 @@ class ChatApp(BaseApp):
         self.channels: dict[int, deque[ChatMessage]] = {
             1: deque([], self.channel_buffer_len)
         }
-        self.active_freq: int = 9
+        self.active_freq: int = 1
         self.active_topic: int = 1
         self.active_channel: int = self.active_freq * 100 + self.active_topic
         self.channel_messages_updated = True
@@ -123,7 +123,7 @@ class ChatApp(BaseApp):
                 f"Channel: {self.active_freq:02d}:{self.active_topic:02d}    {MY_ADDRESS:x} : {self.my_alias}",
                 "Hackaday Chat",
             ),
-            menubar_labels=("Post", "Latest", "Freq", "Topic", "Home"),
+            menubar_labels=("Post", "Latest", "", "Topic", "Home"),
             messages=[],
         )
         self.page.add_message_rows(1, left_width=80)
@@ -156,31 +156,6 @@ class ChatApp(BaseApp):
                     self.send(message_text)
                     self.compose_active = False
                     self.page.infobar_right.set_text("Hackaday Chat")
-
-
-        if self.freq_picker_active:
-            key, text = self.page.text_box_type(self.badge.keyboard)
-            self.page.infobar_right.set_text(f"{len(text)}/2  F3 to set")
-            self.page.infobar_left.set_text("Enter Frequency band: 1-52")
-            if self.badge.keyboard.escape_pressed:
-                self.page.close_text_box()
-                self.freq_picker_active = False
-                self.page.infobar_left.set_text(f"Channel: {self.active_freq:02d}:{self.active_topic:02d}    {MY_ADDRESS:x} : {self.my_alias}")
-                self.page.infobar_right.set_text("Hackaday Chat")
-            if self.badge.keyboard.f3() or key == self.badge.keyboard.ENTER:  
-                if self.page.text_box.get_text():
-                    new_freq_str = self.page.close_text_box()
-                    self.freq_picker_active = False
-                    self.page.infobar_right.set_text("Hackaday Chat")
-                    try:
-                        new_freq = max(1, min(52, int(new_freq_str)))
-                        self.badge.lora.set_freq_slot(new_freq)
-                        self.active_freq = new_freq
-                        self.active_channel = self.active_freq * 100 + self.active_topic
-                        self.page.infobar_left.set_text(f"Channel: {self.active_freq:02d}:{self.active_topic:02d}    {MY_ADDRESS:x} : {self.my_alias}")
-                        self._update_channel_messages()
-                    except ValueError as err:
-                        print(f"Unable to set frequency slot: {err}. Must be [1-52]")
 
         if self.topic_picker_active:
             key, text = self.page.text_box_type(self.badge.keyboard)
@@ -238,14 +213,6 @@ class ChatApp(BaseApp):
                 self.page.create_text_box()
                 self.compose_active = True
 
-            if self.badge.keyboard.f3():  # Set Freq Slot
-                self.page.create_text_box(
-                    # Switch to Frequency Slot 01-52
-                    default_text="",
-                    one_line=True,
-                    char_limit=2,
-                )
-                self.freq_picker_active = True
 
             if self.badge.keyboard.f4():  # Set Topic 
                 self.page.create_text_box(

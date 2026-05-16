@@ -49,7 +49,7 @@ class AppMenu(BaseApp):
         self.add_logo("images/logos/" + str(random.randrange(1, 102)) + ".png")
 
         # Header message
-        self.add_message("SUPERCON 2025\nPasadena, CA")
+        self.add_message("2026 Hackaday Europe\nLecco, IT")
         self.page.create_menubar(self.name_list)
         self.page.replace_screen()
 
