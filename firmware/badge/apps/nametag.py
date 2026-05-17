@@ -55,6 +55,7 @@ class App(BaseApp):
         self.image_dir = "images/headshots"
         self.headshot_files = []
         self.headshot_index = 0
+        self.flipped = 0
         self.picker_image = None
         self.picker_label = None
         ## Small state machine to handle button presses in the app
@@ -63,6 +64,7 @@ class App(BaseApp):
             "enter_add_username",
             "in_add_username",
             "enter_fullscreen",
+            "enter_fullscreen_flipped",
             "in_fullscreen",
             "enter_pick_font",
             "in_pick_font",
@@ -86,7 +88,6 @@ class App(BaseApp):
         Don't block in this function, for it will block reading the radio and keyboard.
         If the app only runs in the background, you can delete this method.
         """
-
         if self.app_states[self.app_state] == "default":
             print("default mode")
             if self.badge.keyboard.f1():
@@ -96,7 +97,7 @@ class App(BaseApp):
             if self.badge.keyboard.f3():
                 self.app_state = self.app_states.index("enter_fullscreen")
             if self.badge.keyboard.f4():
-                pass
+                self.app_state = self.app_states.index("enter_fullscreen_flipped")
             if self.badge.keyboard.f5():
                 self.badge.display.clear()
                 self.switch_to_background()
@@ -121,7 +122,11 @@ class App(BaseApp):
                 # Re-render the main view so the updated name appears immediately
                 self.switch_to_foreground()
                 return
-
+        if self.app_states[self.app_state] == "enter_fullscreen_flipped":
+            ## flip and set state to fullscreen
+            display = lvgl.display_get_default()
+            display.set_rotation(lvgl.DISPLAY_ROTATION._90)
+            self.app_state = self.app_states.index("enter_fullscreen")
         if self.app_states[self.app_state] == "enter_fullscreen":
             ## overlay
             print("enter fullscreen")
@@ -167,6 +172,9 @@ class App(BaseApp):
                 or self.badge.keyboard.f4()
                 or self.badge.keyboard.f5()
             ):
+                
+                display = lvgl.display_get_default()
+                display.set_rotation(lvgl.DISPLAY_ROTATION._270)
                 self.fullscreen.delete()
                 self.app_state = self.app_states.index("default")
 
@@ -396,7 +404,7 @@ class App(BaseApp):
                     self.p.set_menubar_button_label(0, "Name")
                     self.p.set_menubar_button_label(1, "Pick Img")
                     self.p.set_menubar_button_label(2, "Fullscreen")
-                    self.p.set_menubar_button_label(3, "")
+                    self.p.set_menubar_button_label(3, "Full 180°")
                     self.p.set_menubar_button_label(4, "Home")
                 except Exception:
                     pass
@@ -435,7 +443,7 @@ class App(BaseApp):
             self.image_path = "images/headshots/wrencher.png"
         self.p.create_infobar([f"Hello, My Name Is: {self.username}", "Nametag App"])
         self.p.create_content()
-        self.p.create_menubar(["Name", "Pick Img", "Fullscreen", "", "Home"])
+        self.p.create_menubar(["Name", "Pick Img", "Fullscreen", "Full 180°", "Home"])
         # Build content: image on the left (rounded), name label to the right. No scaling.
         self.name_label = None
         self.headshot = None
