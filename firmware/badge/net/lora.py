@@ -8,29 +8,15 @@ from net.sx1262 import SX1262, CHANNEL_FREE, LORA_DETECTED, ERR_UNKNOWN
 from hardware import board
 
 
-# US 915MHz ISM Band
-# 902-928 MHz
-# 5000kHz bandwidth, equivalent to Short Turbo, so use Short Turbo frequency slot IDs
-# We can use the meshtastic freq slots
-# Frequencies of interest and their approximate Short Turbo Freq Slot #
-# Mt Wilson Repeaters 927.875 - 62.5 - SF9 - CR5. aka meshtastic LF freq slot 104
-# Mestashtic Long Fast Freq Slot 20 906.875 MHz, aka ~ST 10
-# Meshtastic Long Moderate Freq Slot 6 902.6875 MHz, aka ~ST 2
-# Meshtastic Long Slow Freq Slot 27 905.3125 MHz, aka ~ST 7
-# Meshtastic Medium Fast Freq Slot 45 913.125 MHz, aka ~ST 23
-# Meshtastic Medium Slow Freq Slot 52 914.875 MHz, aka ~ST 26
-# Meshtastic Short Turbo Freq Slot 50 926.750 MHz, aka ST 50
-# Meshtastic Short Fast Freq Slot 68 918.875 MHz, aka ~ST 34
-# Meshtastic Short Slow Freq Slot 75 920.625 MHz, aka ~ST 38
-
 
 class LoraRadio:
     def __init__(self, tx_led=None, tx_power=9):
         # Settings
         # https://meshtastic.org/docs/overview/radio-settings/
-        self.freq_slot = 9
-        self.frequency = 906.250  # MHz: 902 to 928, 904.125 is freq slot 9
-        self.bandwidth = 500.0  # 250000  # kHz: 31000, 125000, or 250000
+        self.freq_slot = 1
+        self.frequency = 869.525  # MHz: Only one slot in EU
+
+        self.bandwidth = 250.0  # 250000  # kHz: 31000, 125000, or 250000
         self.coding_rate = (
             5  # 4/x bit redundancy, increases reliability but decreases datarate: 5 - 8
         )
