@@ -117,6 +117,18 @@ class ConfigManager(BaseApp):
                     self.page.message_rows.set_cell_value(
                         self.cursor_pos, 1, f"> {self.config[self.cursor_pos][1]}"
                     )
+            if self.badge.keyboard.f1():
+                try:
+                    int(self.config[self.cursor_pos][1])
+                    print("Not allowed to edit numeric configs, sorry")
+                    if self.badge.crypto.private_key is not None:
+                        raise ValueError(42)
+                except ValueError:
+                    self.page.create_text_box(
+                        self.config[self.cursor_pos][1],
+                        one_line=True,
+                    )
+                    self.edit_active = True
             if self.badge.keyboard.f3():
                     self.page.scroll_up(13)
                     self.page.message_rows.set_cell_value(
