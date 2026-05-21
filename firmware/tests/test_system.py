@@ -59,7 +59,7 @@ class TestFullSession:
 
         # See MOTD
         shell.motd()
-        assert "v0.1" in out.text
+        assert "v0.2" in out.text
         assert "help" in out.text.lower()
         out.clear()
 
@@ -518,7 +518,7 @@ class TestStorageIntegration:
         # Stat
         shell.run_command("storage stat " + test_file)
         assert "file" in out.text.lower()
-        assert test_file in out.text
+        assert test_file.replace("\\", "/") in out.text
         out.clear()
 
         # Remove
