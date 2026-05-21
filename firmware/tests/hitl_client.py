@@ -2,6 +2,7 @@ import time
 import re
 import sys
 import io
+import threading
 from unittest.mock import MagicMock
 
 try:
@@ -151,37 +152,88 @@ class BadgeMockClient(BaseCLIClient):
         self.app.read_stdin_noblock.side_effect = lambda: self._stdin_buf.pop(0) if self._stdin_buf else ""
         
         # 4. Run loop until prompt appears
-        iters_limit = max_iters or 100000 
+        # Use both an iteration cap and wall-clock deadline so hangs fail fast.
+        iters_limit = max_iters or 5000
         iters = 0
         found_prompt = False
-        target_prompt = "badge >: " 
+        long_running = False
+        target_prompt = "badge >: "
+        prompt_tail = ">:"
+        deadline = time.time() + max(timeout, 0.5)
         
-        while iters < iters_limit:
-            self.app.run_background()
-            iters += 1
-            current_output = "".join(self._stdout_lines)
-            if target_prompt in current_output and not self._stdin_buf:
-                found_prompt = True
-                break
-            
-        self.app.read_stdin_noblock = orig_read
+        def _run_background_once_with_watchdog(timeout_s=0.5, allow_long_running=False):
+            err = {}
+
+            def _runner():
+                try:
+                    self.app.run_background()
+                except Exception as ex:
+                    err["ex"] = ex
+
+            t = threading.Thread(target=_runner, daemon=True)
+            t.start()
+            t.join(timeout_s)
+            if t.is_alive():
+                if allow_long_running:
+                    return False
+                raise TimeoutError(
+                    "CliApp.run_background() appears hung while processing input. "
+                    f"stdin_buf={repr(self._stdin_buf[:20])} "
+                    f"line_buf={repr(getattr(self.app, '_line_buf', ''))}"
+                )
+            if "ex" in err:
+                raise err["ex"]
+            return True
+
+        try:
+            while iters < iters_limit:
+                if time.time() > deadline:
+                    break
+                allow_long_running = cmd is None
+                completed = _run_background_once_with_watchdog(
+                    allow_long_running=allow_long_running
+                )
+                if not completed:
+                    long_running = True
+                    break
+                iters += 1
+                current_output = "".join(self._stdout_lines)
+                if (
+                    (target_prompt in current_output or prompt_tail in current_output)
+                    and not self._stdin_buf
+                ):
+                    found_prompt = True
+                    break
+        finally:
+            self.app.read_stdin_noblock = orig_read
         
         # 5. Extract output
         output = "".join(self._stdout_lines)
         
         # Clean up output
-        if output.startswith(cmd):
+        if cmd and output.startswith(cmd):
             output = output.split("\r\n", 1)[-1]
-        elif cmd in output:
+        elif cmd and cmd in output:
             output = output.replace(cmd, "", 1).strip("\r\n")
             
         if target_prompt in output:
             idx = output.rfind(target_prompt)
             output = output[:idx]
+        elif prompt_tail in output:
+            idx = output.rfind(prompt_tail)
+            output = output[:idx]
             
-        if not found_prompt and iters >= iters_limit:
+        if not found_prompt:
+             if long_running:
+                 return output.strip()
              if "Error:" in output or "Unknown command:" in output:
                  return output.strip()
-             return f"ERROR: Timeout. iters={iters} output={output!r}"
+             return (
+                 "ERROR: Timeout waiting for prompt. "
+                 f"cmd={cmd!r} timeout={timeout}s iters={iters} "
+                 f"stdin_buf={repr(self._stdin_buf[:20])} "
+                 f"line_buf={repr(getattr(self.app, '_line_buf', ''))} "
+                 f"output={output!r}"
+             )
             
         return output.strip()
