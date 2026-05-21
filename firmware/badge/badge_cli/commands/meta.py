@@ -26,6 +26,7 @@ class MetaCommands:
         shell.register_command("?", self._cmd_help, "Alias for help")
         shell.register_command("!", self._cmd_bang, "Alias for 'info device'")
         shell.register_command("echo", self._cmd_echo, "Echo text back")
+        shell.register_command("clear", self._cmd_clear, "Clear terminal screen")
         shell.register_command("exit", self._cmd_exit, "Drop to MicroPython REPL")
         shell.register_command("version", self._cmd_version, "Firmware version info")
         shell.register_command("uptime", self._cmd_uptime, "Time since boot")
@@ -74,6 +75,11 @@ class MetaCommands:
     def _cmd_echo(self, args):
         """Echo text back to the terminal."""
         self.shell._write(" ".join(args))
+
+    def _cmd_clear(self, args):
+        """Clear the terminal screen and move cursor to top-left."""
+        # ANSI clear screen + cursor home
+        self.shell._write_raw("\x1b[2J\x1b[H")
 
     def _cmd_exit(self, args):
         """Drop to the MicroPython REPL."""
