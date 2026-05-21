@@ -1,0 +1,39 @@
+name: Firmware Build Check
+
+on:
+  push:
+    paths:
+      - "firmware/**"
+      - ".github/workflows/firmware-build-check.yml"
+  pull_request:
+    paths:
+      - "firmware/**"
+      - ".github/workflows/firmware-build-check.yml"
+  workflow_dispatch:
+
+jobs:
+  compile-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile Python sources
+        run: |
+          python -m compileall -q badge
+          python -m compileall -q tests
+          python -m compileall -q scripts
