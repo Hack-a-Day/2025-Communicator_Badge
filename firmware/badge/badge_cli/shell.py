@@ -334,11 +334,19 @@ class Shell:
         if desc:
             self._write(group_name + ": " + desc)
         self._write("Commands:")
+        colw = 15
+
+        def pad(text, width):
+            text = str(text)
+            if len(text) >= width:
+                return text
+            return text + (" " * (width - len(text)))
+
         # Sort sub-commands for consistent output
         subcmds = sorted(group.keys())
         for sub in subcmds:
             _, help_text = group[sub]
-            self._write("  " + sub.ljust(15) + help_text)
+            self._write("  " + pad(sub, colw) + help_text)
 
     def _split_line(self, line):
         """Split a command line into tokens, respecting double-quoted strings.
@@ -348,13 +356,26 @@ class Shell:
         Returns:
             List of strings like ['net', 'send', '0x1234', 'hello world']
         """
-        import re
-        # This regex matches either a quoted string (group 1) or a non-space
-        # sequence (group 2).
-        pattern = r'"([^"]*)"|(\S+)'
-        matches = re.findall(pattern, line)
-        # matches is a list of tuples like [('', 'net'), ('', 'send'), ('hello world', '')]
-        return [m[0] if m[0] else m[1] for m in matches]
+        tokens = []
+        buf = ""
+        in_quotes = False
+
+        for ch in line:
+            if ch == '"':
+                in_quotes = not in_quotes
+                continue
+
+            if not in_quotes and ch.isspace():
+                if buf:
+                    tokens.append(buf)
+                    buf = ""
+            else:
+                buf += ch
+
+        if buf:
+            tokens.append(buf)
+
+        return tokens
 
     def _init_commands(self):
         """Initialize and register all command modules."""
@@ -402,6 +423,7 @@ class Shell:
         self.badusb_cmds = BadUsbCommands(self)
         self.uart_cmds = UartCommands(self)
         # self.wardriving_cmds = WardrivingCommands(self)
+        NetCommands(self)
         HardwareCommands(self)
 
         ChatCommands(self)
