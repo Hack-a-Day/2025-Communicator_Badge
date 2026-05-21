@@ -310,6 +310,90 @@ venv/Scripts/activate
 pip install -r requirements.txt
 ```
 
+## Build and deploy to the badge
+
+There are two common deployment paths:
+
+1. **Full flash**: write the complete MicroPython firmware image to the ESP32.
+2. **Incremental deploy**: copy Python app files to an already-flashed badge.
+
+Most development uses incremental deploy. Use full flash when first setting up a badge, after a major firmware image update, or to recover from a broken device state.
+
+### 1) Find the serial port
+
+With the badge connected over USB, identify its serial port.
+
+Windows (PowerShell):
+```powershell
+Get-CimInstance Win32_SerialPort | Select-Object DeviceID, Description
+```
+
+Linux/macOS:
+```bash
+ls /dev/ttyACM* /dev/ttyUSB* /dev/cu.usb* 2>/dev/null
+```
+
+### 2) Full flash (firmware image)
+
+From `firmware/`, write the included image `2026_hackaday_europe_image.bin`.
+
+Cross-platform (replace `<PORT>`):
+```bash
+esptool --port <PORT> erase-flash
+esptool --port <PORT> --baud 1500000 write-flash 0 2026_hackaday_europe_image.bin
+```
+
+Windows example:
+```powershell
+esptool --port COM5 erase-flash
+esptool --port COM5 --baud 1500000 write-flash 0 2026_hackaday_europe_image.bin
+```
+
+The helper script `flashme` contains the same commands:
+```bash
+# Linux/macOS
+./flashme <PORT>
+
+# Windows PowerShell (explicitly pass COM port)
+esptool --port COM5 erase-flash
+esptool --port COM5 --baud 1500000 write-flash 0 2026_hackaday_europe_image.bin
+```
+
+### 3) Incremental deploy (code only)
+
+After the image is on the badge, copy Python files from `firmware/badge/`.
+
+With `mpremote`:
+```bash
+mpremote cp -r badge/* :
+mpremote reset
+```
+
+Or with the helper script:
+```bash
+scripts/update.py --reset push
+```
+
+### 4) Verify deploy and connect to CLI
+
+Open a serial terminal at `115200` baud. The badge CLI prompt should appear.
+
+Quick checks:
+```text
+help
+info device
+net address
+```
+
+If the CLI is running and these commands return valid output, deployment is successful.
+
+### Optional: Build your own MicroPython image
+
+If you want to rebuild the image instead of using the provided binary:
+
+* See `micropython/LVGL_MICROPYTHON_COMPILE_NOTES` for the current build process.
+* See `micropython/README.md` for details on included features and notes.
+
 ## Syncing to the badge
 
 There are two methods to copy all the files to the badge.
@@ -352,4 +436,11 @@ If you want to access the MicroPython `REPL` (Read Execute Print Loop), type `ex
 ```python
 >>> from hardware.badge import badge_obj
 ```
+
+## Troubleshooting deploy issues
+
+* **Permission denied / port busy**: close serial monitors (including IDE tabs) and retry.
+* **No serial port visible**: try another USB data cable or USB port.
+* **Device does not boot after flash**: re-run erase + write-flash and power-cycle.
+* **Files did not update as expected**: run `scripts/update.py --reset push` to force sync and remove stale files.
 
