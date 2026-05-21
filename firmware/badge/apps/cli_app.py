@@ -21,8 +21,14 @@ class CliApp(BaseApp):
         self.background_sleep_ms = 20
         self.stdin = stdin or sys.stdin
         self.stdout = stdout or sys.stdout
-        self.poll = select.poll()
-        self.poll.register(self.stdin, select.POLLIN)
+        self.poll = None
+        try:
+            self.poll = select.poll()
+            self.poll.register(self.stdin, select.POLLIN)
+        except Exception:
+            # Some test/mocked stdin objects don't provide a usable fileno().
+            # In that case, fall back to a no-op reader unless tests override it.
+            self.poll = None
         self.shell = Shell(badge, write_func=self.stdout.write)
         self.shell.check_interrupt_func = self.run_background
         self._line_buf = ""
@@ -43,6 +49,25 @@ class CliApp(BaseApp):
         This mirrors UsbDebug behavior to avoid losing characters when
         hosts send bytes faster than one app loop tick.
         """
+        if self.poll is None:
+            # Fallback for mocked stdin in tests and environments where poll()
+            # registration is not possible.
+            try:
+                if hasattr(self.stdin, "in_waiting") and self.stdin.in_waiting <= 0:
+                    return ""
+            except Exception:
+                pass
+            try:
+                if hasattr(self.stdin, "any") and not self.stdin.any():
+                    return ""
+            except Exception:
+                pass
+            try:
+                data = self.stdin.read(1)
+                return data or ""
+            except Exception:
+                return ""
+
         buffer = ""
         events = self.poll.poll(0)
         while events:
