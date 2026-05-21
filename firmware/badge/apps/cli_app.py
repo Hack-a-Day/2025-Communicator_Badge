@@ -46,12 +46,12 @@ class CliApp(BaseApp):
         buffer = ""
         events = self.poll.poll(0)
         while events:
+            try:
+                buffer += self.stdin.read(1)
+            except UnicodeError:
+                pass
+            # Briefly wait for additional bytes in the same burst.
             events = self.poll.poll(2)
-            if events:
-                try:
-                    buffer += self.stdin.read(1)
-                except UnicodeError:
-                    pass
         return buffer
 
     def run_background(self):
