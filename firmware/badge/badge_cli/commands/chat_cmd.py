@@ -36,27 +36,13 @@ class ChatCommands:
             return
 
         message = " ".join(args)
-        # Use ChatApp's send mechanism
+        # Route sends through ChatApp directly. It owns channel state and network tx.
         try:
-            from net.net import send, BROADCAST_ADDRESS
-            from net.protocols import NetworkFrame
-
-            # Build the same TEXT_CHAT frame ChatApp would
-            alias = self.shell.badge.config.get("alias", b"").decode().strip()
-            if not alias:
-                alias = "cli"
-
-            # Check if badge has private key for signed messages
-            if self.shell.badge.crypto.private_key is not None:
-                chat._compose_signed_message(message, alias)
-                w("Sent (signed): " + message)
-            else:
-                chat._compose_message(message, alias)
-                w("Sent: " + message)
-        except (ImportError, AttributeError):
-            # Fallback: just log that we would send
-            w("(Network stack not available — message not sent)")
-            w("Would send: " + message)
+            chat.send(message)
+            w("Sent: " + message)
+        except Exception as exc:
+            w("Error: message not sent")
+            w(str(exc))
 
     def _cmd_history(self, args):
         w = self.shell._write
