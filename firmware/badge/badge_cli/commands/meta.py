@@ -42,13 +42,21 @@ class MetaCommands:
     def _cmd_help(self, args):
         """List all available commands and command groups."""
         w = self.shell._write
+        colw = 20
+
+        def pad(text, width):
+            text = str(text)
+            if len(text) >= width:
+                return text
+            return text + (" " * (width - len(text)))
+
         w("Commands:")
 
         # Top-level commands (sorted)
         cmds = sorted(self.shell._commands.keys())
         for name in cmds:
             _, help_text = self.shell._commands[name]
-            w("  " + name.ljust(20) + help_text)
+            w("  " + pad(name, colw) + help_text)
 
         # Command groups
         if self.shell._groups:
@@ -57,7 +65,7 @@ class MetaCommands:
             groups = sorted(self.shell._groups.keys())
             for gname in groups:
                 desc = self.shell._group_descriptions.get(gname, "")
-                w("  " + gname.ljust(20) + desc)
+                w("  " + pad(gname, colw) + desc)
 
     def _cmd_bang(self, args):
         """Alias for 'info device'."""

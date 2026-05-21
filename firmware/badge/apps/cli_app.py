@@ -39,34 +39,39 @@ class CliApp(BaseApp):
     def read_stdin_noblock(self):
         """Read from USB serial without blocking.
 
-        Returns one character at a time for line-buffer building,
-        or empty string if nothing available.
+        Returns a short buffered burst of characters, or empty string.
+        This mirrors UsbDebug behavior to avoid losing characters when
+        hosts send bytes faster than one app loop tick.
         """
+        buffer = ""
         events = self.poll.poll(0)
-        if events:
-            try:
-                return self.stdin.read(1)
-            except UnicodeError:
-                pass
-        return ""
+        while events:
+            events = self.poll.poll(2)
+            if events:
+                try:
+                    buffer += self.stdin.read(1)
+                except UnicodeError:
+                    pass
+        return buffer
 
     def run_background(self):
-        ch = self.read_stdin_noblock()
-        if not ch:
+        chunk = self.read_stdin_noblock()
+        if not chunk:
             return
 
-        if ch == "\x03":  # Ctrl+C — interrupt streaming command
-            if self.shell._streaming:
-                self.shell.interrupt()
-            return
+        for ch in chunk:
+            if ch == "\x03":  # Ctrl+C — interrupt streaming command
+                if self.shell._streaming:
+                    self.shell.interrupt()
+                continue
 
-        if ch == "\x04":  # Ctrl+D — drop to MicroPython REPL
-            raise KeyboardInterrupt()
+            if ch == "\x04":  # Ctrl+D — drop to MicroPython REPL
+                raise KeyboardInterrupt()
 
-        if self._cli_mode:
-            self._handle_cli_input(ch)
-        else:
-            self._handle_passthrough(ch)
+            if self._cli_mode:
+                self._handle_cli_input(ch)
+            else:
+                self._handle_passthrough(ch)
 
     def _handle_cli_input(self, ch):
         """Handle input in CLI mode — build lines, dispatch on Enter."""
@@ -144,9 +149,16 @@ class CliApp(BaseApp):
 
         try:
             import lvgl as lv
-            # For real hardware
+            # For real hardware: support both newer and older lvgl bindings.
             if not getattr(self, "_cli_label", None):
-                scr = lv.scr_act()
+                scr_act = getattr(lv, "scr_act", None)
+                screen_active = getattr(lv, "screen_active", None)
+                if callable(scr_act):
+                    scr = scr_act()
+                elif callable(screen_active):
+                    scr = screen_active()
+                else:
+                    return
                 self._cli_label = lv.label(scr)
                 self._cli_label.set_text("CLI Active")
                 self._cli_label.align(lv.ALIGN.TOP_RIGHT, -5, 5)
@@ -158,5 +170,5 @@ class CliApp(BaseApp):
                     self._cli_label.set_style_pad_all(2, 0)
                 except AttributeError:
                     pass # Older LVGL version syntax fallback
-        except ImportError:
+        except (ImportError, AttributeError):
             pass
