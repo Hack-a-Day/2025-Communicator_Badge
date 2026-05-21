@@ -179,7 +179,7 @@ class BadgeMockClient(BaseCLIClient):
             idx = output.rfind(target_prompt)
             output = output[:idx]
             
-        if not found_prompt and iters >= max_iters:
+        if not found_prompt and iters >= iters_limit:
              if "Error:" in output or "Unknown command:" in output:
                  return output.strip()
              return f"ERROR: Timeout. iters={iters} output={output!r}"
