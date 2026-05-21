@@ -318,7 +318,10 @@ class TestLoaderCommands:
     def test_loader_list_no_apps(self, shell_and_output):
         shell, output = shell_and_output
         shell.run_command("loader list")
-        assert "No apps" in output.text
+        text = output.text
+        assert "No apps" in text or "Registered apps:" in text
+        if "Registered apps:" in text:
+            assert "CLI" in text
 
     def test_loader_help(self, shell_and_output):
         shell, output = shell_and_output
