@@ -100,7 +100,12 @@ The CLI uses a grouped structure. Type `<group> ?` for sub-commands.
 
 #### `wifi` & `ble` — Wardriving
 - `wifi scan`: Scan for 2.4GHz access points.
+- `wifi ap on [ssid] [password] [channel]`: Enable hotspot/AP mode.
+- `wifi ap status`: Show hotspot/AP state and settings.
+- `wifi ap off`: Disable hotspot/AP mode.
 - `ble scan [timeout]`: Scan for nearby Bluetooth Low Energy devices.
+- `ble advertise <on|off> [name]`: Start/stop BLE advertising.
+- `ble addr`: Show local BLE MAC address.
 
 ---
 
@@ -113,7 +118,6 @@ The CLI is designed for responsiveness. Long-running commands (like `lora rx` or
 The `Shell` class supports raw binary I/O, allowing for robust file transfers. The `xsend` and `xreceive` commands implement the **XMODEM-CRC** protocol, providing a reliable way to update scripts and assets on the badge without needing a full MicroPython development environment.
 
 ## Testing Framework
-...
 
 The CLI includes a comprehensive test suite that runs in CPython, enabling fast development without hardware.
 
@@ -132,6 +136,62 @@ python -m pytest tests/test_hitl.py --hitl-port mock -v
 # Run on Physical Hardware
 # This communicates with a real badge over USB
 python -m pytest tests/test_hitl.py --hitl-port COM3 -v
+
+# Run multi-device HITL tests on two badges
+python -m pytest tests/test_hitl_multi.py -v --hitl-port COM6 --hitl-port-secondary COM12
+
+# Run Flipper integration tests (optional third device)
+python -m pytest tests/test_hitl_flipper.py tests/test_hitl_flipper_multi.py -v \
+    --hitl-port COM6 --hitl-port-secondary COM12 --hitl-flipper-port COM5
+```
+
+### Multi-Device and Flipper Options
+
+- `--hitl-port`: Primary badge serial port.
+- `--hitl-port-secondary`: Secondary badge serial port for pair tests.
+- `--hitl-flipper-port`: Optional Flipper Zero serial port.
+- `--hitl-known-wifi-ssid` / `--hitl-known-wifi-bssid`: Optional deterministic Wi-Fi target assertions.
+- `--hitl-flipper-*-activity-cmd`: Optional Flipper activity commands for BLE/Wi-Fi/radio characterization tests.
+
+### HITL Test Setups
+
+```mermaid
+flowchart LR
+    subgraph Host
+        PY["pytest runner"]
+        P1["arg --hitl-port"]
+        P2["arg --hitl-port-secondary"]
+        PF["arg --hitl-flipper-port"]
+    end
+
+    subgraph Single
+        B1["Badge A"]
+    end
+
+    subgraph Multi
+        BA["Badge A"]
+        BB["Badge B"]
+        BA <--> |"LoRa BLE Wi-Fi"| BB
+    end
+
+    subgraph FlipperRig
+        BX["Badge A"]
+        BY["Badge B"]
+        FZ["Flipper Zero"]
+        BX <--> |"radio coexistence"| BY
+        FZ -. "activity perturbation" .-> BX
+        FZ -. "activity perturbation" .-> BY
+    end
+
+    Single ~~~ Multi
+    Multi ~~~ FlipperRig
+
+    PY --> P1 --> B1
+    PY --> P1 --> BA
+    PY --> P2 --> BB
+    PY --> P1 --> BX
+    PY --> P2 --> BY
+    PY --> PF --> FZ
 ```
 
 ### HITL Architecture
