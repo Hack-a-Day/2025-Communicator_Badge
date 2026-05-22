@@ -141,6 +141,10 @@ class BadgeSerialClient(BaseCLIClient):
     def _has_ready_marker(self, text):
         return self._ready_marker in text
 
+    def _has_startup_banner(self, text):
+        low = text.lower()
+        return "type 'help' or '?' for a list of commands" in low
+
     def _strip_ansi(self, text):
         return re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", text)
 
@@ -237,10 +241,20 @@ class BadgeSerialClient(BaseCLIClient):
         output = self._read_until_prompt(timeout)
         clean = self._strip_ansi(output)
 
-        # If we only captured a bare prompt, retry once to avoid prompt-race flakiness.
+        # If we captured a startup banner or only a bare prompt, retry command once.
         stripped = clean.strip()
-        if cmd is not None and stripped.endswith("] >:") and stripped.count("\n") <= 1:
-            output += self._read_until_prompt(timeout=1.0)
+        needs_retry = (
+            cmd is not None
+            and (
+                self._has_startup_banner(clean)
+                or not stripped
+                or (stripped.endswith("] >:") and stripped.count("\n") <= 1)
+            )
+        )
+        if needs_retry:
+            self.ser.reset_input_buffer()
+            self.ser.write(f"{cmd}\r\n".encode('utf-8'))
+            output = self._read_until_prompt(timeout=max(1.0, timeout))
             clean = self._strip_ansi(output)
         
         # Clean up output

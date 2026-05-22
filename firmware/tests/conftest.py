@@ -151,6 +151,42 @@ def pytest_addoption(parser):
         default="",
         help="Optional Flipper Sub-GHz command to run in interruptible mode",
     )
+    parser.addoption(
+        "--hitl-flipper-wifi-activity-cmd",
+        action="store",
+        default="",
+        help="Optional Flipper CLI command to generate activity during badge Wi-Fi tests",
+    )
+    parser.addoption(
+        "--hitl-flipper-wifi-stop-cmd",
+        action="store",
+        default="",
+        help="Optional Flipper CLI command to stop activity started by --hitl-flipper-wifi-activity-cmd",
+    )
+    parser.addoption(
+        "--hitl-flipper-radio-activity-cmd",
+        action="store",
+        default="",
+        help="Optional Flipper CLI command to generate RF activity during LoRa/radio tests",
+    )
+    parser.addoption(
+        "--hitl-flipper-radio-stop-cmd",
+        action="store",
+        default="",
+        help="Optional Flipper CLI command to stop activity started by --hitl-flipper-radio-activity-cmd",
+    )
+    parser.addoption(
+        "--hitl-known-wifi-ssid",
+        action="store",
+        default="",
+        help="Optional known SSID expected in multi-device Wi-Fi tests",
+    )
+    parser.addoption(
+        "--hitl-known-wifi-bssid",
+        action="store",
+        default="",
+        help="Optional known BSSID expected in multi-device Wi-Fi tests",
+    )
 
 @pytest.fixture(scope="function")
 def hitl_badge(request):
@@ -242,6 +278,19 @@ def hitl_flipper_settings(request):
         "bt_cmd": request.config.getoption("--hitl-flipper-bt-cmd"),
         "log_cmd": request.config.getoption("--hitl-flipper-log-cmd"),
         "subghz_cmd": request.config.getoption("--hitl-flipper-subghz-cmd"),
+        "wifi_activity_cmd": request.config.getoption("--hitl-flipper-wifi-activity-cmd"),
+        "wifi_stop_cmd": request.config.getoption("--hitl-flipper-wifi-stop-cmd"),
+        "radio_activity_cmd": request.config.getoption("--hitl-flipper-radio-activity-cmd"),
+        "radio_stop_cmd": request.config.getoption("--hitl-flipper-radio-stop-cmd"),
+    }
+
+
+@pytest.fixture(scope="function")
+def hitl_multi_settings(request):
+    """Configuration bundle for multi-device non-Flipper HITL tests."""
+    return {
+        "known_wifi_ssid": request.config.getoption("--hitl-known-wifi-ssid"),
+        "known_wifi_bssid": request.config.getoption("--hitl-known-wifi-bssid"),
     }
 
 
