@@ -1,11 +1,14 @@
 import micropython
 import time
 import asyncio as aio  # type: ignore
+from runtime_flags import apply_serial_print_policy
+
+apply_serial_print_policy()
 
 try:
     from hardware.badge import Badge
     from net.net import badgenet, capture_all_packets
-    from apps import app_manager, app_menu, chat, config_manager, usb_debug, nametag, talks
+    from apps import app_manager, app_menu, chat, config_manager, nametag, talks
 
     # Badge CLI and related apps.
     from apps.cli_app import CliApp

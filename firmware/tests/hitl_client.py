@@ -1,5 +1,6 @@
 import time
 import threading
+import re
 from unittest.mock import MagicMock
 
 try:
@@ -32,6 +33,9 @@ class BadgeSerialClient(BaseCLIClient):
             or (">: " in text and "badge" in text.lower())
         )
 
+    def _strip_ansi(self, text):
+        return re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", text)
+
     def _has_repl_prompt(self, text):
         return "\n>>> " in text or text.rstrip().endswith(">>>")
 
@@ -47,7 +51,7 @@ class BadgeSerialClient(BaseCLIClient):
         time.sleep(1.0) # Increased wait for boot/connect
         self.ser.reset_input_buffer()
         self.ser.write(b"\r\n")
-        out = self._read_until_prompt(timeout=2.0)
+        out = self._read_until_prompt(timeout=4.0)
 
         if self._has_repl_prompt(out):
             out += self._recover_from_repl()
@@ -61,10 +65,9 @@ class BadgeSerialClient(BaseCLIClient):
             if self._has_repl_prompt(out):
                 out += self._recover_from_repl()
             if not self._has_shell_prompt(out):
-                # One last try: send 'exit' in case we are in a sub-app that supports it.
-                self.ser.write(b"exit\r\n")
-                time.sleep(0.5)
-                out += self._read_until_prompt()
+                # Final non-destructive retry.
+                self.ser.write(b"\r\n")
+                out += self._read_until_prompt(timeout=2.0)
                 if self._has_repl_prompt(out):
                     out += self._recover_from_repl()
                 if not self._has_shell_prompt(out):
@@ -78,25 +81,47 @@ class BadgeSerialClient(BaseCLIClient):
         tout = timeout if timeout is not None else self.timeout
         end_time = time.time() + tout
         output = ""
+        saw_prompt = False
+        last_rx = time.time()
+
         while time.time() < end_time:
             if self.ser.in_waiting > 0:
                 chunk = self.ser.read(self.ser.in_waiting).decode('utf-8', errors='replace')
                 output += chunk
+                last_rx = time.time()
                 if self._has_shell_prompt(output) or self._has_repl_prompt(output):
-                    break
+                    saw_prompt = True
             else:
+                # Once we've seen a prompt, wait briefly for line tail to settle.
+                if saw_prompt and (time.time() - last_rx) > 0.15:
+                    break
                 time.sleep(0.01)
+
         return output
 
-    def run_command(self, cmd, timeout=5.0): # Default timeout increased for real hardware
-        self.ser.reset_input_buffer()
-        # Ensure command is sent cleanly
-        self.ser.write(f"{cmd}\r\n".encode('utf-8'))
+    def send_raw(self, chars):
+        if isinstance(chars, str):
+            chars = chars.encode("utf-8", errors="ignore")
+        self.ser.write(chars)
+
+    def run_command(self, cmd, timeout=5.0, max_iters=None): # max_iters kept for interface compatibility
+        if cmd is not None:
+            self.ser.reset_input_buffer()
+        # Ensure command is sent cleanly unless caller already queued raw input.
+        if cmd is not None:
+            self.ser.write(f"{cmd}\r\n".encode('utf-8'))
         output = self._read_until_prompt(timeout)
+        clean = self._strip_ansi(output)
+
+        # If we only captured a bare prompt, retry once to avoid prompt-race flakiness.
+        stripped = clean.strip()
+        if cmd is not None and stripped.endswith("] >:") and stripped.count("\n") <= 1:
+            output += self._read_until_prompt(timeout=1.0)
+            clean = self._strip_ansi(output)
         
         # Clean up output
         # Remove echo (interleaved chars might happen, but starts-with is usually safe)
-        if output.startswith(cmd):
+        if cmd is not None and clean.startswith(cmd):
             output = output.split("\r\n", 1)[-1]
         
         # Remove prompt from end

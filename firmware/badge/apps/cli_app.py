@@ -5,7 +5,6 @@ Dispatches complete lines to the Shell for command execution.
 Preserves UsbDebug's keyboard-injection and LoRa-inject features.
 """
 
-import binascii
 import select
 import sys
 
@@ -32,6 +31,7 @@ class CliApp(BaseApp):
         self.shell = Shell(badge, write_func=self.stdout.write)
         self.shell.check_interrupt_func = self.run_background
         self._line_buf = ""
+        self._saw_cr = False
         self._cli_mode = True  # True = CLI mode, False = passthrough (UsbDebug compat)
         self._started = False
 
@@ -102,7 +102,13 @@ class CliApp(BaseApp):
         """Handle input in CLI mode — build lines, dispatch on Enter."""
         self.show_ui_feedback()
         
+        if ch == "\n" and self._saw_cr:
+            # Many terminals send CRLF; ignore LF immediately after CR.
+            self._saw_cr = False
+            return
+
         if ch in ("\r", "\n"):
+            self._saw_cr = (ch == "\r")
             # Echo the newline
             self.stdout.write("\r\n")
             if self._line_buf:
@@ -110,10 +116,12 @@ class CliApp(BaseApp):
                 self._line_buf = ""
             self.shell._prompt()
         elif ch == "\x7f" or ch == "\x08":  # Backspace / Delete
+            self._saw_cr = False
             if self._line_buf:
                 self._line_buf = self._line_buf[:-1]
                 self.stdout.write("\x08 \x08")  # Erase character on terminal
         elif ch == "\t":  # Tab completion
+            self._saw_cr = False
             matches = self.shell.complete(self._line_buf)
             if len(matches) == 1:
                 # Complete the line
@@ -126,9 +134,11 @@ class CliApp(BaseApp):
                 self.shell._prompt()
                 self.stdout.write(self._line_buf)
         elif ch == "\x1b":
+            self._saw_cr = False
             # Start of escape sequence
             self._esc_buf = "["
         elif getattr(self, "_esc_buf", "") == "[":
+            self._saw_cr = False
             if ch == "[": return # Skip second [ if it happens
             if ch == "A": # Up
                 self._line_buf = self.shell.get_history_nav("up", self._line_buf)
@@ -138,6 +148,7 @@ class CliApp(BaseApp):
                 self._redraw_line()
             self._esc_buf = ""
         elif ord(ch) >= 32:  # Printable character
+            self._saw_cr = False
             self._line_buf += ch
             self.stdout.write(ch)  # Echo
 

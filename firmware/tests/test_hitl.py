@@ -1,6 +1,149 @@
 import pytest
 import time
 
+
+def _parse_top_level_commands(help_text):
+    cmds = []
+    in_commands = False
+    for line in help_text.splitlines():
+        if line.startswith("Commands:"):
+            in_commands = True
+            continue
+        if line.startswith("Command groups"):
+            break
+        if in_commands and line.startswith("  "):
+            parts = line.strip().split()
+            if parts:
+                cmds.append(parts[0])
+    return cmds
+
+
+def _parse_groups(help_text):
+    groups = []
+    in_groups = False
+    for line in help_text.splitlines():
+        if line.startswith("Command groups"):
+            in_groups = True
+            continue
+        if in_groups and line.startswith("  "):
+            parts = line.strip().split()
+            if parts:
+                groups.append(parts[0])
+    return groups
+
+
+def _parse_subcommands(group_help_text):
+    subcmds = []
+    in_commands = False
+    for line in group_help_text.splitlines():
+        if line.startswith("Commands:"):
+            in_commands = True
+            continue
+        if in_commands and line.startswith("  "):
+            parts = line.strip().split()
+            if parts:
+                subcmds.append(parts[0])
+    return subcmds
+
+
+SAFE_TOPLEVEL = {
+    "help": "help",
+    "?": "?",
+    "!": "!",
+    "echo": "echo hitl smoke",
+    "clear": "clear",
+    "version": "version",
+    "uptime": "uptime",
+    "date": "date",
+    "free": "free",
+    "free_blocks": "free_blocks",
+    "sleep": "sleep 1ms",
+    "neofetch": "neofetch",
+    "history": "history",
+}
+
+SKIP_TOPLEVEL = {"exit", "factory_reset", "top", "log", "batch"}
+
+SAFE_SUBCOMMANDS = {
+    ("info", "device"): "info device",
+    ("info", "power"): "info power",
+    ("config", "list"): "config list",
+    ("config", "get"): "config get alias",
+    ("config", "set"): "config set hitl_smoke val",
+    ("config", "save"): "config save",
+    ("storage", "list"): "storage list",
+    ("storage", "write"): "storage write hitl_smoke.txt hello",
+    ("storage", "read"): "storage read hitl_smoke.txt",
+    ("storage", "remove"): "storage remove hitl_smoke.txt",
+    ("lora", "info"): "lora info",
+    ("lora", "freq"): "lora freq",
+    ("net", "address"): "net address",
+    ("net", "nodes"): "net nodes",
+    ("i2c", "scan"): "i2c scan",
+    ("gpio", "logic"): "gpio logic sao1 8 1",
+    ("crypto", "has_key"): "crypto has_key",
+    ("nametag", "get"): "nametag get",
+    ("nametag", "set"): "nametag set hitl",
+    ("loader", "list"): "loader list",
+    ("power", "off"): "power off",
+    ("power", "reboot"): "power reboot",
+    ("chat", "status"): "chat status",
+    ("peers", "list"): "peers list",
+    ("poll", "list"): "poll list",
+    ("ctf", "status"): "ctf status",
+    ("talks", "list"): "talks list",
+    ("badusb", "type"): "badusb type hi",
+    ("uart", "status"): "uart status",
+    ("wifi", "scan"): "wifi scan",
+    ("ble", "scan"): "ble scan 1",
+    ("wardriving", "scan"): "wardriving scan 1",
+    ("wardriving", "wifi"): "wardriving wifi",
+    ("wardriving", "ble"): "wardriving ble 1",
+    ("subghz", "rx"): "subghz rx 915.0",
+}
+
+SKIP_SUBCOMMANDS = {
+    ("info", "top"),
+    ("lora", "rx"),
+    ("lora", "rx_raw"),
+    ("net", "sniff"),
+    ("log", "stream"),
+    ("uart", "bridge"),
+    ("uart", "terminal"),
+    ("subghz", "scan"),
+    ("subghz", "rx"),
+    ("subghz", "record"),
+    ("subghz", "jam"),
+    ("subghz", "play"),
+    ("power", "deep"),
+    ("power", "off"),
+    ("power", "reboot"),
+}
+
+INTERACTIVE_HINTS = {
+    "bridge",
+    "terminal",
+    "rx",
+    "rx_raw",
+    "sniff",
+    "stream",
+    "scan",
+    "record",
+    "jam",
+    "play",
+    "watch",
+    "host",
+}
+
+
+def _assert_cli_response_sane(output, allow_unknown=False):
+    low = output.lower()
+    assert "traceback" not in low
+    if not allow_unknown:
+        assert "unknown command:" not in low
+        assert "unknown sub-command:" not in low
+
+
 def test_hitl_echo(hitl_badge):
     """Test basic connectivity and echoing."""
     out = hitl_badge.run_command("echo hello hitl")
@@ -121,3 +264,49 @@ def test_hitl_apps(hitl_badge):
     
     out = hitl_badge.run_command("peers list")
     assert "peers" in out.lower()
+
+
+def test_hitl_cli_sweep_all_commands(hitl_badge):
+    """Comprehensive smoke sweep of discovered CLI commands/subcommands.
+
+    This test discovers commands from live `help` output, then executes safe
+    command forms (or usage probes) for broad regression coverage.
+    """
+    help_out = hitl_badge.run_command("help")
+    _assert_cli_response_sane(help_out)
+
+    top_level = _parse_top_level_commands(help_out)
+    groups = _parse_groups(help_out)
+
+    # Top-level command smoke
+    for cmd in top_level:
+        if cmd in SKIP_TOPLEVEL:
+            continue
+        invocation = SAFE_TOPLEVEL.get(cmd)
+        if invocation is None:
+            # Probe command usage path if we don't have a canned invocation.
+            invocation = cmd
+        out = hitl_badge.run_command(invocation)
+        _assert_cli_response_sane(out)
+
+    # Group + subcommand smoke
+    for group in groups:
+        ghelp = hitl_badge.run_command(group + " ?")
+        _assert_cli_response_sane(ghelp)
+
+        subcmds = _parse_subcommands(ghelp)
+        for sub in subcmds:
+            key = (group, sub)
+            if key in SKIP_SUBCOMMANDS:
+                continue
+
+            invocation = SAFE_SUBCOMMANDS.get(key, group + " " + sub)
+            try:
+                out = hitl_badge.run_command(invocation)
+            except TimeoutError:
+                if sub in INTERACTIVE_HINTS:
+                    continue
+                raise
+            # Optional hardware features can legitimately be unavailable.
+            allow_unknown = group in {"wifi", "ble", "wardriving"}
+            _assert_cli_response_sane(out, allow_unknown=allow_unknown)
