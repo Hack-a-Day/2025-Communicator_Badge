@@ -1,7 +1,4 @@
 import time
-import re
-import sys
-import io
 import threading
 from unittest.mock import MagicMock
 
@@ -27,25 +24,50 @@ class BadgeSerialClient(BaseCLIClient):
         self.timeout = timeout
         self.ser = None
         self._prompt = "badge >: " # Added space to match Shell._prompt()
+
+    def _has_shell_prompt(self, text):
+        return (
+            self._prompt in text
+            or "] >: " in text
+            or (">: " in text and "badge" in text.lower())
+        )
+
+    def _has_repl_prompt(self, text):
+        return "\n>>> " in text or text.rstrip().endswith(">>>")
+
+    def _recover_from_repl(self):
+        # Ctrl+D requests a soft reboot in MicroPython.
+        self.ser.write(b"\x04")
+        time.sleep(0.6)
+        self.ser.write(b"\r\n")
+        return self._read_until_prompt(timeout=3.0)
         
     def connect(self):
         self.ser = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
         time.sleep(1.0) # Increased wait for boot/connect
         self.ser.reset_input_buffer()
         self.ser.write(b"\r\n")
-        out = self._read_until_prompt()
-        if self._prompt not in out:
+        out = self._read_until_prompt(timeout=2.0)
+
+        if self._has_repl_prompt(out):
+            out += self._recover_from_repl()
+
+        if not self._has_shell_prompt(out):
             # Try Ctrl+C to break any running app
             self.ser.write(b"\x03")
             time.sleep(0.2)
             self.ser.write(b"\r\n")
             out += self._read_until_prompt()
-            if self._prompt not in out:
-                 # One last try: send 'exit' just in case we are in a sub-app
+            if self._has_repl_prompt(out):
+                out += self._recover_from_repl()
+            if not self._has_shell_prompt(out):
+                # One last try: send 'exit' in case we are in a sub-app that supports it.
                 self.ser.write(b"exit\r\n")
                 time.sleep(0.5)
                 out += self._read_until_prompt()
-                if self._prompt not in out:
+                if self._has_repl_prompt(out):
+                    out += self._recover_from_repl()
+                if not self._has_shell_prompt(out):
                     raise TimeoutError(f"Could not synchronize with CLI prompt on {self.port}. Got: {out!r}")
                 
     def disconnect(self):
@@ -60,7 +82,7 @@ class BadgeSerialClient(BaseCLIClient):
             if self.ser.in_waiting > 0:
                 chunk = self.ser.read(self.ser.in_waiting).decode('utf-8', errors='replace')
                 output += chunk
-                if self._prompt in output:
+                if self._has_shell_prompt(output) or self._has_repl_prompt(output):
                     break
             else:
                 time.sleep(0.01)
@@ -78,8 +100,8 @@ class BadgeSerialClient(BaseCLIClient):
             output = output.split("\r\n", 1)[-1]
         
         # Remove prompt from end
-        if self._prompt in output:
-            idx = output.rfind(self._prompt)
+        idx = max(output.rfind(self._prompt), output.rfind("] >: "), output.rfind(">: "))
+        if idx != -1:
             output = output[:idx]
             
         return output.strip()
@@ -190,7 +212,9 @@ class BadgeMockClient(BaseCLIClient):
                 if time.time() > deadline:
                     break
                 allow_long_running = cmd is None
+                watchdog_timeout = max(0.5, timeout) if cmd is not None else 0.5
                 completed = _run_background_once_with_watchdog(
+                    timeout_s=watchdog_timeout,
                     allow_long_running=allow_long_running
                 )
                 if not completed:

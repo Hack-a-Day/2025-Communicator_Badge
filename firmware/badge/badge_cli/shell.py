@@ -298,7 +298,7 @@ class Shell:
                                 else:
                                     full_p = entry
                                 matches.append(group_name + " " + parts[1] + " " + full_p)
-                    except Exception as e:
+                    except Exception:
                         pass
         
         return matches
@@ -394,10 +394,10 @@ class Shell:
         from .commands.subghz_cmd import SubGhzCommands
         from .commands.badusb_cmd import BadUsbCommands
         from .commands.uart_cmd import UartCommands
-        # from .commands.wardriving_cmd import WardrivingCommands
-        from .commands.lora_cmd import LoraCommands
         from .commands.wifi_cmd import WifiCommands
         from .commands.ble_cmd import BleCommands
+        from .commands.wardriving_cmd import WardrivingCommands
+        from .commands.lora_cmd import LoraCommands
         from .commands.net_cmd import NetCommands
         from .commands.hardware_cmd import HardwareCommands
 
@@ -422,7 +422,9 @@ class Shell:
         self.subghz_cmds = SubGhzCommands(self)
         self.badusb_cmds = BadUsbCommands(self)
         self.uart_cmds = UartCommands(self)
-        # self.wardriving_cmds = WardrivingCommands(self)
+        self.wifi_cmds = WifiCommands(self)
+        self.ble_cmds = BleCommands(self)
+        self.wardriving_cmds = WardrivingCommands(self)
         NetCommands(self)
         HardwareCommands(self)
 
