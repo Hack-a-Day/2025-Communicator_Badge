@@ -677,6 +677,11 @@ Parameters:
 - `key_token`: named key (for example ENTER, ESC, LEFT) or literal token.
 - `count`: optional max events to print.
 
+Notes:
+
+- `input dump` with no count prints a single snapshot and returns immediately.
+- `input dump <count>` streams up to the requested number of events.
+
 Output:
 
 - Injection confirmations and queued event stream.

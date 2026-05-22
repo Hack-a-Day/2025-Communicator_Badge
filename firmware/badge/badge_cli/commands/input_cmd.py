@@ -62,6 +62,14 @@ class InputCommands:
 
     def _cmd_dump(self, args):
         w = self.shell._write
+        if not args:
+            key = self.badge.keyboard.read_key()
+            if key is None:
+                w("No input queued.")
+            else:
+                w("[1] %r" % key)
+            return
+
         count = 20
         if args:
             try:
