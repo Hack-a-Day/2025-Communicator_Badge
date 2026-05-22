@@ -30,7 +30,7 @@ MOTD = r"""
 | '_ \ / _` |/ _` |/ _` |/ _ \  / __| | |
 | |_) | (_| | (_| | (_| |  __/ | (__| | |
 |_.__/ \__,_|\__,_|\__, |\___|  \___|_|_|
-                   |___/         """ + Colors.YELLOW + r"""v0.2""" + Colors.END + r"""
+                   |___/         """ + Colors.YELLOW + r"""v0.3""" + Colors.END + r"""
 Type 'help' or '?' for a list of commands.
 """
 
@@ -398,8 +398,11 @@ class Shell:
         from .commands.ble_cmd import BleCommands
         from .commands.wardriving_cmd import WardrivingCommands
         from .commands.lora_cmd import LoraCommands
+        from .commands.radio_cmd import RadioCommands
         from .commands.net_cmd import NetCommands
         from .commands.hardware_cmd import HardwareCommands
+        from .commands.display_cmd import DisplayCommands
+        from .commands.input_cmd import InputCommands
 
         # High-level Badge/App commands
         from .commands.chat_cmd import ChatCommands
@@ -426,7 +429,10 @@ class Shell:
         self.ble_cmds = BleCommands(self)
         self.wardriving_cmds = WardrivingCommands(self)
         NetCommands(self)
+        RadioCommands(self)
         HardwareCommands(self)
+        DisplayCommands(self)
+        InputCommands(self)
 
         ChatCommands(self)
         PeersCommands(self)

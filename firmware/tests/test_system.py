@@ -59,7 +59,7 @@ class TestFullSession:
 
         # See MOTD
         shell.motd()
-        assert "v0.2" in out.text
+        assert "v0.3" in out.text
         assert "help" in out.text.lower()
         out.clear()
 
@@ -85,7 +85,7 @@ class TestFullSession:
 
         # Version
         shell.run_command("version")
-        assert "v0.1" in out.text
+        assert "v0.3" in out.text
         out.clear()
 
         # Neofetch

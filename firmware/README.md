@@ -13,8 +13,7 @@ The Communicator Badge is running Micropython, compiled with LVGL and ucryptogra
     - [App Structure](#app-structure)
     - [Using LVGL](#using-lvgl)
 - [Badge CLI](#badge-cli)
-  - [Command Reference](#command-reference)
-  - [CLI Testing](#cli-testing)
+  - [FCLI User Guide](#fcli-user-guide)
 - [Badge Firmware Development](#badge-firmware-development)
   - [Installing an Editor](#installing-an-editor)
     - [Beginner: Thonny](#beginner-thonny)
@@ -230,33 +229,19 @@ def switch_to_background(self):
 
 # Badge CLI
 
-The badge includes a **Flipper Zero-style command-line interface** accessible over USB serial. This provides deep access to hardware, network stack, and internal state.
+The badge includes a Flipper-style command-line interface over USB serial.
 
-For full command documentation, architecture details, and testing instructions, see the [Badge CLI Documentation](badge/badge_cli/README.md).
+## FCLI User Guide
 
-### Quick Start
-Connect at 115200 baud and type `help`.
+For complete user documentation, command reference, workflows, and troubleshooting, see:
 
-```text
-badge >: help
-Commands:
-  help                 List all commands
-  neofetch             System info with ASCII art
-  uptime               Time since boot
-  ...
-Command groups (type '<group> ?' for sub-commands):
-  lora                 SX1262 Radio control
-  net                  BadgeNet network stack
-  storage              Flash filesystem operations
-  ...
-```
+- [FCLI User Guide](FCLI_USER_GUIDE.md)
 
-### CLI Testing
-The CLI has a full CPython test suite and HITL (Hardware-In-The-Loop) framework.
-```bash
-cd firmware/
-python -m pytest tests/ -v --hitl-port mock
-```
+For implementation and architecture details, see:
+
+- [Badge CLI Internal Documentation](badge/badge_cli/README.md)
+
+Connect at 115200 baud and run `help` to list command groups.
 
 # Badge Firmware Development
 
