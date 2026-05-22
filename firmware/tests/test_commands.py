@@ -1,6 +1,5 @@
 """Tests for info, config, lora, net, hardware, crypto, storage, nametag, loader, power commands."""
 
-import pytest
 from badge_cli.shell import Shell
 from tests.mocks.mock_badge import MockBadge
 
@@ -390,15 +389,11 @@ class TestWardrivingCommands:
         
         shell.run_command("wifi scan")
         text = output.text
-        # wifi/ble groups are optional depending on current shell registration.
-        if "Unknown command: wifi" in text:
-            assert "Unknown command: wifi" in text
-        else:
-            assert "TestNet_2G" in text
-            assert "OpenWifi" in text
-            assert "WPA2" in text
-            assert "OPEN" in text
-            assert "11:22:33:44:55:66" in text
+        assert "TestNet_2G" in text
+        assert "OpenWifi" in text
+        assert "WPA2" in text
+        assert "OPEN" in text
+        assert "11:22:33:44:55:66" in text
 
     def test_ble_scan(self, shell_and_output, monkeypatch):
         import sys
@@ -415,11 +410,33 @@ class TestWardrivingCommands:
         
         shell.run_command("ble scan 1")
         text = output.text
-        if "Unknown command: ble" in text:
-            assert "Unknown command: ble" in text
-        else:
-            assert "Scanning" in text
-            assert "12:34:56:78:90:ab" in text
+        assert "Scanning" in text
+        assert "12:34:56:78:90:ab" in text
+
+    def test_wardriving_scan(self, shell_and_output, monkeypatch):
+        import sys
+        shell, output = shell_and_output
+
+        mock_network = sys.modules["network"]
+        mock_sta = mock_network.WLAN.return_value
+        mock_sta.active.return_value = True
+        mock_sta.scan.return_value = [
+            (b"SweepNet", b"\x11\x22\x33\x44\x55\x66", 1, -42, 3, 0),
+        ]
+
+        mock_bt = sys.modules["bluetooth"]
+        mock_ble = mock_bt.BLE.return_value
+        if hasattr(mock_ble, "irq"):
+            del mock_ble.irq
+        mock_ble.mock_scan.return_value = [
+            ("aa:bb:cc:dd:ee:ff", -70, b"\x02\x01\x06"),
+        ]
+
+        shell.run_command("wardriving scan 1")
+        text = output.text
+        assert "Wardriving sweep" in text
+        assert "SweepNet" in text
+        assert "aa:bb:cc:dd:ee:ff" in text
 
 
 class TestMetaCommands:
@@ -461,6 +478,7 @@ class TestHelpShowsAllGroups:
             "info", "config", "lora", "net", "i2c", "gpio",
             "led", "crypto", "storage", "nametag", "loader",
             "power", "talks", "ctf", "poll", "peers", "chat",
+            "wifi", "ble", "wardriving",
         ]
         for group in expected_groups:
             assert group in text, "Missing group in help: " + group
