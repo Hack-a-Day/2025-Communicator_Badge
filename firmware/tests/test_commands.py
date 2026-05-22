@@ -372,6 +372,36 @@ class TestSubGhzCommands:
         assert getattr(shell.badge.lora, "_ook_tx_log", None)
         assert shell.badge.lora._ook_tx_log[0] == (433.92, b"\xaa\xbb\xcc\xdd")
 
+    def test_subghz_replay_from_sub_file(self, shell_and_output, tmp_path):
+        from radio.sub_file import SubFile
+
+        shell, output = shell_and_output
+        path = tmp_path / "sample.sub"
+        SubFile.write(
+            str(path),
+            433.92,
+            "OOK",
+            [
+                {"ts_ms": 0, "data": b"\xaa\xbb"},
+                {"ts_ms": 10, "data": b"\x01\x02"},
+            ],
+        )
+
+        shell.run_command(f"subghz replay {path}")
+        assert "Replay complete" in output.text
+        assert len(shell.badge.lora._ook_tx_log) >= 2
+
+    def test_subghz_play_compatibility_old_syntax(self, shell_and_output, tmp_path):
+        from radio.sub_file import SubFile
+
+        shell, output = shell_and_output
+        path = tmp_path / "compat.sub"
+        SubFile.write(str(path), 433.92, "OOK", [{"ts_ms": 0, "data": b"\xde\xad"}])
+
+        shell.run_command(f"subghz play 433.92 {path} 1")
+        assert "Playback complete" in output.text
+        assert shell.badge.lora._ook_tx_log[-1] == (433.92, b"\xde\xad")
+
 
 class TestWardrivingCommands:
     def test_wifi_scan(self, shell_and_output, monkeypatch):
@@ -525,6 +555,67 @@ class TestBadUsbCommands:
         assert "KEY: 40 MOD: 0" in logs  # ENTER is 0x28 (40 in decimal)
         assert "KEY: 21 MOD: 8" in logs  # GUI+r: r is 0x15 (21 in decimal)
 
+
+class TestRadioCommands:
+    def test_radio_info(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("radio info")
+        assert "Radio (SX1262)" in output.text
+        assert "Frequency" in output.text
+
+    def test_radio_set_power(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("radio set_power 12")
+        assert "TX power set to 12 dBm" in output.text
+        assert shell.badge.lora.tx_power == 12
+
+    def test_radio_set_freq(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("radio set_freq 915.0")
+        assert "Frequency set to 915.000 MHz" in output.text
+        assert shell.badge.lora.frequency == 915.0
+
+
+class TestDisplayCommands:
+    def test_display_text(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("display text 1 2 hello")
+        assert "Rendered text" in output.text
+        assert shell.badge.display.last_text[:3] == (1, 2, "hello")
+
+    def test_display_backlight(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("display backlight 777")
+        assert "Backlight set to 777" in output.text
+        assert shell.badge.display.backlight.value == 777
+
+    def test_display_clear(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("display clear")
+        assert "Display cleared" in output.text
+        assert shell.badge.display.cleared is True
+
+
+class TestInputCommands:
+    def test_input_send_named_key(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("input send ENTER")
+        assert "Injected key" in output.text
+        assert shell.badge.keyboard.read_key() == "\n"
+
+    def test_input_send_text(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("input send_text ab")
+        assert "Injected 2 characters" in output.text
+        assert shell.badge.keyboard.read_key() == "a"
+        assert shell.badge.keyboard.read_key() == "b"
+
+    def test_input_dump(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.badge.keyboard.keybuffer.append("x")
+        shell.run_command("input dump 1")
+        assert "Input dump complete (1 event)." in output.text
+
 class TestHelpShowsAllGroups:
     """Verify that help now shows all registered command groups."""
 
@@ -536,7 +627,7 @@ class TestHelpShowsAllGroups:
             "info", "config", "lora", "net", "i2c", "gpio",
             "led", "crypto", "storage", "nametag", "loader",
             "power", "talks", "ctf", "poll", "peers", "chat",
-            "wifi", "ble", "wardriving",
+            "wifi", "ble", "wardriving", "radio", "display", "input",
         ]
         for group in expected_groups:
             assert group in text, "Missing group in help: " + group

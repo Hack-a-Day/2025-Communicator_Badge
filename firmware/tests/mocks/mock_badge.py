@@ -65,9 +65,27 @@ class MockDisplay:
 
     def __init__(self):
         self.cli_active_shown = False
+        self.last_text = None
+        self.last_image = None
+        self.cleared = False
+
+        class _Backlight:
+            def __init__(self):
+                self.value = 0
+
+            def duty(self, v):
+                self.value = v
+
+        self.backlight = _Backlight()
 
     def clear(self):
-        pass
+        self.cleared = True
+
+    def text(self, x, y, text, color=0xFFFFFF):
+        self.last_text = (x, y, text, color)
+
+    def image(self, x, y, filename):
+        self.last_image = (x, y, filename)
 
     def show_cli_active(self):
         self.cli_active_shown = True

@@ -1,4 +1,10 @@
-"""Sub-GHz commands: subghz rx, subghz tx, scan, record, play."""
+"""Sub-GHz commands: subghz rx, tx, scan, record, replay.
+
+`play` remains as a compatibility alias for replay.
+"""
+
+from radio.signal_player import SignalPlayer
+from radio.signal_recorder import SignalRecorder
 
 class SubGhzCommands:
     """Registers the 'subghz' command group for OOK replay."""
@@ -6,14 +12,26 @@ class SubGhzCommands:
     def __init__(self, shell):
         self.shell = shell
         self.badge = shell.badge
+        self.recorder = SignalRecorder(self.badge.lora)
+        self.player = SignalPlayer(self.badge.lora)
         shell.register_group(
             "subghz",
             {
                 "rx": (self._cmd_rx, "Receive raw Sub-GHz (OOK): subghz rx <freq>"),
                 "tx": (self._cmd_tx, "Transmit raw Sub-GHz (OOK): subghz tx <freq> <hex_data>"),
                 "scan": (self._cmd_scan, "Real-time frequency analyzer: subghz scan"),
-                "record": (self._cmd_record, "Record OOK to file: subghz record <freq> <file.ook>"),
-                "play": (self._cmd_play, "Play recorded OOK: subghz play <freq> <file.ook>"),
+                "record": (
+                    self._cmd_record,
+                    "Record OOK to file: subghz record <freq> <duration_s> <file.sub>",
+                ),
+                "play": (
+                    self._cmd_play,
+                    "Alias for replay: subghz play <file.sub> [repeat] [freq]",
+                ),
+                "replay": (
+                    self._cmd_replay,
+                    "Replay capture file: subghz replay <file.sub> [repeat] [freq]",
+                ),
             },
             "Sub-GHz RF (OOK/FSK) operations"
         )
@@ -91,45 +109,77 @@ class SubGhzCommands:
 
     def _cmd_record(self, args):
         w = self.shell._write
-        w_raw = self.shell._write_raw
-        if len(args) < 2:
-            w("Usage: subghz record <freq> <file.ook>")
+        if len(args) < 3:
+            w("Usage: subghz record <freq> <duration_s> <file.sub>")
             return
-            
-        freq = float(args[0])
-        path = args[1]
-        
-        w(f"Recording from {freq} MHz to {path}. Ctrl+C to stop.")
-        self.shell._streaming = True
-        
+
         try:
-            with open(path, "wb") as f:
-                while self.shell._streaming:
-                    data = self.badge.lora.rx_ook(freq, timeout_ms=100)
-                    if data:
-                        f.write(data)
-                        w_raw(".")
-                    self.shell.check_interrupt()
-            w("\nRecording saved.")
+            freq = float(args[0])
+            duration_s = float(args[1])
+            path = args[2]
+        except ValueError:
+            w("Error: invalid frequency or duration")
+            return
+
+        w("Recording from %.3f MHz for %.1f s to %s" % (freq, duration_s, path))
+        try:
+            count = self.recorder.record(
+                frequency_mhz=freq,
+                duration_s=duration_s,
+                path=path,
+                check_interrupt=self.shell.check_interrupt,
+            )
+            w("Saved %d packet(s)." % count)
         except Exception as e:
-            w("\nError: " + str(e))
-        finally:
-            self.shell._streaming = False
+            w("Error: " + str(e))
 
     def _cmd_play(self, args):
         w = self.shell._write
-        if len(args) < 2:
-            w("Usage: subghz play <freq> <file.ook>")
+        if not args:
+            w("Usage: subghz play <file.sub> [repeat] [freq]")
+            w("Compatibility: subghz play <freq> <file.sub> [repeat]")
             return
-            
-        freq = float(args[0])
-        path = args[1]
-        
+
+        # Compatibility mode for old syntax: play <freq> <file> [repeat]
         try:
-            with open(path, "rb") as f:
-                data = f.read()
-            w(f"Playing {len(data)} bytes from {path} on {freq} MHz...")
-            self.badge.lora.tx_ook(freq, data)
-            w("Playback complete.")
+            freq = float(args[0])
+            if len(args) < 2:
+                w("Usage: subghz play <freq> <file.sub> [repeat]")
+                return
+            path = args[1]
+            repeat = int(args[2]) if len(args) > 2 else 1
+        except ValueError:
+            # Canonical syntax: play <file> [repeat] [freq]
+            path = args[0]
+            try:
+                repeat = int(args[1]) if len(args) > 1 else 1
+                freq = float(args[2]) if len(args) > 2 else None
+            except ValueError:
+                w("Error: invalid repeat or frequency")
+                return
+
+        try:
+            sent = self.player.replay(path=path, repeat=repeat, frequency_mhz=freq)
+            w("Playback complete. Sent %d packet(s)." % sent)
+        except Exception as e:
+            w("Error: " + str(e))
+
+    def _cmd_replay(self, args):
+        w = self.shell._write
+        if not args:
+            w("Usage: subghz replay <file.sub> [repeat] [freq]")
+            return
+
+        path = args[0]
+        try:
+            repeat = int(args[1]) if len(args) > 1 else 1
+            freq = float(args[2]) if len(args) > 2 else None
+        except ValueError:
+            w("Error: invalid repeat or frequency")
+            return
+
+        try:
+            sent = self.player.replay(path=path, repeat=repeat, frequency_mhz=freq)
+            w("Replay complete. Sent %d packet(s)." % sent)
         except Exception as e:
             w("Error: " + str(e))

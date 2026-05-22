@@ -79,6 +79,23 @@ The CLI uses a grouped structure. Type `<group> ?` for sub-commands.
 - `lora tx <hex>`: Transmit a raw hexadecimal frame.
 - `lora rx`: Enter receive mode and print decoded frames (Ctrl+C to exit).
 
+#### `radio` — Low-Level SX1262 Controls
+- `radio info`: Display current low-level radio configuration.
+- `radio set_freq <mhz>`: Set center frequency (150-960 MHz).
+- `radio set_power <-9..22>`: Set TX output power in dBm.
+- `radio set_sf <7..12>`: Set spreading factor.
+- `radio set_bw <khz>`: Set LoRa bandwidth in kHz.
+- `radio freq_slot <1..52>`: Set US slot frequency mapping.
+- `radio rssi`: Read current RSSI.
+
+#### `subghz` — Raw Capture and Replay
+- `subghz rx <freq_mhz>`: Receive one OOK-style payload (if supported).
+- `subghz tx <freq_mhz> <hex_data>`: Transmit OOK-style raw bytes.
+- `subghz scan`: Run real-time RSSI waterfall scan.
+- `subghz record <freq_mhz> <duration_s> <file.sub>`: Capture timestamped packets.
+- `subghz replay <file.sub> [repeat] [freq_mhz]`: Replay captured packets with timing.
+- `subghz play ...`: Compatibility alias for replay.
+
 #### `net` — BadgeNet Stack
 - `net address`: Display your 4-byte network address.
 - `net nodes`: List all badges seen on the network recently.
@@ -97,6 +114,17 @@ The CLI uses a grouped structure. Type `<group> ?` for sub-commands.
 - `badusb run <path>`: Execute a DuckyScript from the filesystem.
 - `badusb type <text>`: Inject a string as keyboard input.
 - `badusb press <key>`: Inject a specific key press (e.g., ENTER, ESC).
+
+#### `display` — On-Screen Rendering Helpers
+- `display text <x> <y> <text>`: Draw text at pixel coordinates.
+- `display clear`: Clear the active screen.
+- `display backlight <0..1023>`: Set display backlight level.
+- `display image [x] [y] <path>`: Render an image from storage.
+
+#### `input` — Keyboard Injection Helpers
+- `input send <key>`: Inject a single key (supports named keys like ENTER, ESC).
+- `input send_text <text>`: Inject a string as key events.
+- `input dump [count]`: Print received key events from the keybuffer.
 
 #### `wifi` & `ble` — Wardriving
 - `wifi scan`: Scan for 2.4GHz access points.

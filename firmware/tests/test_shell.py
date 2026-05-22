@@ -85,7 +85,7 @@ class TestVersionCommand:
     def test_version_shows_version(self, shell_and_output):
         shell, output = shell_and_output
         shell.run_command("version")
-        assert "v0.1" in output.text
+        assert "v0.3" in output.text
 
     def test_version_shows_platform(self, shell_and_output):
         shell, output = shell_and_output
