@@ -404,14 +404,37 @@ class TestWardrivingCommands:
         mock_ble = mock_bt.BLE.return_value
         del mock_ble.irq
         # Add a mock_scan method since the real irq based one won't run its callback in tests natively without a fake event loop
+        name = b"HITL_TEST"
         mock_ble.mock_scan.return_value = [
-            ("12:34:56:78:90:ab", -60, b"\x02\x01\x06\x03\x03\xaa\xfe"),
+            (
+                "12:34:56:78:90:ab",
+                -60,
+                b"\x02\x01\x06" + bytes([len(name) + 1, 0x09]) + name,
+            ),
         ]
         
         shell.run_command("ble scan 1")
         text = output.text
         assert "Scanning" in text
         assert "12:34:56:78:90:ab" in text
+        assert "HITL_TEST" in text
+
+    def test_ble_advertise(self, shell_and_output, monkeypatch):
+        import sys
+        shell, output = shell_and_output
+
+        mock_bt = sys.modules["bluetooth"]
+        mock_ble = mock_bt.BLE.return_value
+
+        shell.run_command("ble advertise on HITL_TAG")
+        text = output.text
+        assert "advertising on" in text.lower()
+        mock_ble.gap_advertise.assert_called()
+
+        output.clear()
+        shell.run_command("ble advertise off")
+        text = output.text
+        assert "advertising off" in text.lower()
 
     def test_wardriving_scan(self, shell_and_output, monkeypatch):
         import sys

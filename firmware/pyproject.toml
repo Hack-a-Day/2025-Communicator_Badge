@@ -8,3 +8,15 @@ dependencies = [
     "esptool>=4.8.1",
     "mpremote>=1.25.0",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "hitl: hardware-in-the-loop tests",
+    "multi: multi-device HITL tests",
+    "flipper: tests requiring Flipper Zero integration",
+    "ble: BLE-focused tests",
+    "wifi: Wi-Fi-focused tests",
+    "lora: LoRa/radio-focused tests",
+    "stress: stress tests",
+    "soak: long-running soak tests",
+]

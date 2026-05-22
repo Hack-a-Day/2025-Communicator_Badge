@@ -14,6 +14,110 @@ class BaseCLIClient:
     def disconnect(self): raise NotImplementedError()
     def run_command(self, cmd, timeout=2.0): raise NotImplementedError()
 
+
+class GenericSerialCLIClient(BaseCLIClient):
+    """Simple serial CLI client for non-badge devices (e.g., Flipper Zero)."""
+
+    def __init__(self, port, baudrate=115200, timeout=1.0, prompt_hint=">:"):
+        if serial is None:
+            raise ImportError("pyserial is required for HITL testing.")
+        self.port = port
+        self.baudrate = baudrate
+        self.timeout = timeout
+        self.prompt_hint = prompt_hint
+        self.ser = None
+
+    def _strip_ansi(self, text):
+        return re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", text)
+
+    def _has_prompt(self, text):
+        if not text:
+            return False
+        return self.prompt_hint in text
+
+    def _read_until_prompt(self, timeout=None):
+        tout = timeout if timeout is not None else self.timeout
+        end_time = time.time() + tout
+        output = ""
+        saw_prompt = False
+        last_rx = time.time()
+
+        while time.time() < end_time:
+            if self.ser.in_waiting > 0:
+                chunk = self.ser.read(self.ser.in_waiting).decode("utf-8", errors="replace")
+                output += chunk
+                last_rx = time.time()
+                if self._has_prompt(output):
+                    saw_prompt = True
+            else:
+                if saw_prompt and (time.time() - last_rx) > 0.15:
+                    break
+                time.sleep(0.01)
+
+        return output
+
+    def _read_for(self, duration):
+        end_time = time.time() + max(0.0, duration)
+        output = ""
+        while time.time() < end_time:
+            if self.ser.in_waiting > 0:
+                chunk = self.ser.read(self.ser.in_waiting).decode("utf-8", errors="replace")
+                output += chunk
+            else:
+                time.sleep(0.01)
+        return output
+
+    def connect(self):
+        self.ser = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
+        time.sleep(0.6)
+        self.ser.reset_input_buffer()
+        self.ser.write(b"\r\n")
+        self._read_until_prompt(timeout=2.0)
+
+    def disconnect(self):
+        if self.ser and self.ser.is_open:
+            self.ser.close()
+
+    def send_raw(self, chars):
+        if isinstance(chars, str):
+            chars = chars.encode("utf-8", errors="ignore")
+        self.ser.write(chars)
+
+    def run_command(self, cmd, timeout=4.0, max_iters=None):
+        if cmd is not None:
+            self.ser.reset_input_buffer()
+            self.ser.write(f"{cmd}\r\n".encode("utf-8"))
+        output = self._read_until_prompt(timeout=timeout)
+        output = self._strip_ansi(output)
+        if cmd and output.startswith(cmd):
+            output = output.split("\r\n", 1)[-1]
+        idx = output.rfind(self.prompt_hint)
+        if idx != -1:
+            output = output[:idx]
+        return output.strip()
+
+    def run_command_interrupt(self, cmd, run_seconds=1.0, timeout=4.0, interrupt_char="\x03"):
+        """Run an interactive/streaming command, interrupt it, and capture output."""
+        self.ser.reset_input_buffer()
+        self.ser.write(f"{cmd}\r\n".encode("utf-8"))
+        output = self._read_for(run_seconds)
+        self.send_raw(interrupt_char)
+        output += self._read_until_prompt(timeout=timeout)
+        output = self._strip_ansi(output)
+        if output.startswith(cmd):
+            output = output.split("\r\n", 1)[-1]
+        idx = output.rfind(self.prompt_hint)
+        if idx != -1:
+            output = output[:idx]
+        return output.strip()
+
+
+class FlipperSerialClient(GenericSerialCLIClient):
+    """Serial client for Flipper Zero CLI/UART console integration."""
+
+    def __init__(self, port, baudrate=115200, timeout=1.0, prompt_hint=">:"):
+        super().__init__(port=port, baudrate=baudrate, timeout=timeout, prompt_hint=prompt_hint)
+
 class BadgeSerialClient(BaseCLIClient):
     """Manages serial connection to a physical badge."""
 
@@ -25,6 +129,7 @@ class BadgeSerialClient(BaseCLIClient):
         self.timeout = timeout
         self.ser = None
         self._prompt = "badge >: " # Added space to match Shell._prompt()
+        self._ready_marker = "CLI_READY"
 
     def _has_shell_prompt(self, text):
         return (
@@ -32,6 +137,9 @@ class BadgeSerialClient(BaseCLIClient):
             or "] >: " in text
             or (">: " in text and "badge" in text.lower())
         )
+
+    def _has_ready_marker(self, text):
+        return self._ready_marker in text
 
     def _strip_ansi(self, text):
         return re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", text)
@@ -51,10 +159,26 @@ class BadgeSerialClient(BaseCLIClient):
         time.sleep(1.0) # Increased wait for boot/connect
         self.ser.reset_input_buffer()
         self.ser.write(b"\r\n")
-        out = self._read_until_prompt(timeout=4.0)
+        # Give firmware time to finish app startup and emit the ready marker.
+        out = self._read_until_prompt(timeout=10.0)
+
+        if self._has_ready_marker(out) and self._has_shell_prompt(out):
+            return
+
+        # One extra non-destructive nudge before any interrupt recovery.
+        self.ser.write(b"\r\n")
+        out += self._read_until_prompt(timeout=3.0)
+        if self._has_ready_marker(out) and self._has_shell_prompt(out):
+            return
+        if self._has_shell_prompt(out):
+            return
 
         if self._has_repl_prompt(out):
             out += self._recover_from_repl()
+            if self._has_ready_marker(out) and self._has_shell_prompt(out):
+                return
+            if self._has_shell_prompt(out):
+                return
 
         if not self._has_shell_prompt(out):
             # Try Ctrl+C to break any running app

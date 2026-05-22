@@ -34,26 +34,39 @@ async def main():
     print("Initializing main...")
     badge = Badge()
     badgenet.init(badge)
+    hitl_mode = badge.config.get("hitl_mode", b"0") == b"1"
     user_app_manager = app_manager.AppManager("Apps", badge)
-    # These apps are on the main screen when the badge boots
-    primary_apps = [
-        chat.ChatApp("Chat", badge),
-        talks.Talks("Talks", badge),
-        nametag.App("Nametag", badge),
-        SerialTerminalApp("Terminal", badge),
-        ShellGuiApp("Shell", badge),
-        user_app_manager,
-        config_manager.ConfigManager("Config", badge),
-    ]
     # Background apps — CLI replaces UsbDebug as the serial handler
     backgrounded_apps = [
         CliApp("CLI", badge),
-        NetTools("Net Tools", badge),
-        BadgeShark("BadgeShark", badge),
-        CTFApp("CTF", badge),
-        PollApp("Polls", badge),
-        PeersApp("Peers", badge),
     ]
+    if not hitl_mode:
+        backgrounded_apps.extend([
+            NetTools("Net Tools", badge),
+            BadgeShark("BadgeShark", badge),
+            CTFApp("CTF", badge),
+            PollApp("Polls", badge),
+            PeersApp("Peers", badge),
+        ])
+
+    if hitl_mode:
+        print("HITL safe mode enabled")
+
+    if hitl_mode:
+        primary_apps = [
+            ShellGuiApp("Shell", badge),
+            user_app_manager,
+        ]
+    else:
+        primary_apps = [
+            chat.ChatApp("Chat", badge),
+            talks.Talks("Talks", badge),
+            nametag.App("Nametag", badge),
+            SerialTerminalApp("Terminal", badge),
+            ShellGuiApp("Shell", badge),
+            user_app_manager,
+            config_manager.ConfigManager("Config", badge),
+        ]
     main_menu = app_menu.AppMenu("Main", badge, primary_apps, True)
     for app in primary_apps:
         if app:
@@ -67,6 +80,7 @@ async def main():
     capture_all_packets(False)
     print("Badge is up and running!")
     print("Badge CLI is active on USB serial. Type 'help' for commands.")
+    print("CLI_READY")
 
     while True:
         await aio.sleep(60)
