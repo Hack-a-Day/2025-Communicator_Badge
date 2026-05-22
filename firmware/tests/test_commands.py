@@ -395,6 +395,41 @@ class TestWardrivingCommands:
         assert "OPEN" in text
         assert "11:22:33:44:55:66" in text
 
+    def test_wifi_ap_on_status_off(self, shell_and_output, monkeypatch):
+        import sys
+        shell, output = shell_and_output
+
+        mock_network = sys.modules["network"]
+        mock_network.AP_IF = 1
+        mock_network.AUTH_OPEN = 0
+        mock_network.AUTH_WPA_WPA2_PSK = 4
+
+        mock_ap = mock_network.WLAN.return_value
+        state = {"active": False}
+
+        def _active(value=None):
+            if value is None:
+                return state["active"]
+            state["active"] = bool(value)
+
+        mock_ap.active.side_effect = _active
+        mock_ap.config.side_effect = lambda *args, **kwargs: "BadgeHotspot" if args == ("essid",) else 6
+        mock_ap.ifconfig.return_value = ("192.168.4.1", "255.255.255.0", "192.168.4.1", "8.8.8.8")
+
+        shell.run_command("wifi ap on BadgeHotspot pass12345 6")
+        text = output.text.lower()
+        assert "hotspot enabled" in text
+        assert "status: on" in text
+
+        output.clear()
+        shell.run_command("wifi ap off")
+        assert "hotspot disabled" in output.text.lower()
+
+    def test_wifi_ap_password_validation(self, shell_and_output):
+        shell, output = shell_and_output
+        shell.run_command("wifi ap on BadgeHotspot short")
+        assert "at least 8 characters" in output.text.lower()
+
     def test_ble_scan(self, shell_and_output, monkeypatch):
         import sys
         shell, output = shell_and_output
