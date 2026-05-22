@@ -51,6 +51,12 @@ def _resolve_flipper_port(primary_port, secondary_port, explicit_flipper):
     if explicit_flipper:
         return explicit_flipper
 
+    # GitHub Actions runners can expose pseudo serial devices that are not
+    # usable as Flipper consoles. Avoid auto-selecting them unless a port is
+    # explicitly provided.
+    if os.environ.get("GITHUB_ACTIONS", "").lower() == "true":
+        return None
+
     ports = _discover_serial_ports()
     if not ports:
         return None
