@@ -14,6 +14,8 @@ A Gemini / Groq AI chat app for the [Hackaday 2025 Communicator Badge](https://h
 - Up/Down scrolling through chat history
 - Cycle models mid-conversation without losing context
 
+![AI chat session on the badge](chat-session.jpeg)
+
 ## Files
 
 | File | Deploy to | Purpose |
