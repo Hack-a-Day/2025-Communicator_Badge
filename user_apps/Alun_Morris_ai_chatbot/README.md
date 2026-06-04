@@ -6,10 +6,9 @@ A Gemini / Groq AI chat app for the [Hackaday 2025 Communicator Badge](https://h
 
 ## Features
 
-- Chat with **Gemini 2.5 Flash Lite**, **Gemini 2.5 Flash**, or **Groq OSS-120b**
-- **Web search grounding** — Gemini uses the `google_search` tool for live results
+- Chat free with **Gemini 2.5 Flash Lite**, **Gemini 2.5 Flash**, or **Groq OSS-120b**
+- **Web search grounding** — Gemini uses the `google_search` tool for live results with Gemini
 - **WiFi manager** — scan, select, and connect to networks from the badge; credentials saved to NVS flash
-- 4-second splash screen on launch; any keypress dismisses it
 - Right-justified green chat bubbles for user prompts
 - Up/Down scrolling through chat history
 - Cycle models mid-conversation without losing context
