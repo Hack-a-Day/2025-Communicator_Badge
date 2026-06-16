@@ -29,6 +29,7 @@ class BadgeNet:
         self.transmit_queue_max_len = 20
         self.transmit_queue: deque[NetworkFrame] = deque([], self.transmit_queue_max_len)
         self.receive_callbacks: dict[int, list] = {}
+        self.raw_packet_callbacks: list = []
         self.protocols: dict[int, Protocol] = {0: NULL_PROTO}
         self.seen_nodes: dict[int, str] = {}
         self.capture_all_packets: bool = False
@@ -96,6 +97,13 @@ class BadgeNet:
             try:
                 frame = await self.badge.lora.recv()
                 if frame is not None and len(frame) > 0:
+                    # Run raw packet callbacks
+                    for cb in self.raw_packet_callbacks:
+                        try:
+                            cb(frame)
+                        except Exception as e:
+                            print("Error in raw callback:", e)
+
                     # print("frame: ", repr(frame))
                     # rssi = self.badge.lora.get_rssi()
                     # snr = self.badge.lora.get_snr()
@@ -105,7 +113,8 @@ class BadgeNet:
                         message = NetworkFrame().set_frame(frame).validate_frame()
                         # print(f"Received frame {repr(message)}")
                     except (ValueError, IndexError) as err:
-                        print(f"Failed validation {repr(frame)}: {err}")
+                        if not self.raw_packet_callbacks:
+                            print(f"Failed validation {repr(frame)}: {err}")
                         continue
 
                     if self.capture_all_packets and len(message.frame):
@@ -218,6 +227,18 @@ badgenet = BadgeNet()
 def register_receiver(protocol: Protocol, callback=None):
     """Register a callback for incoming messages on a specific port."""
     badgenet.register_receiver(protocol, callback)
+
+
+def register_raw_receiver(callback):
+    """Register a callback for raw incoming packets."""
+    if callback not in badgenet.raw_packet_callbacks:
+        badgenet.raw_packet_callbacks.append(callback)
+
+
+def unregister_raw_receiver(callback):
+    """Unregister a callback for raw incoming packets."""
+    if callback in badgenet.raw_packet_callbacks:
+        badgenet.raw_packet_callbacks.remove(callback)
 
 
 def register_protocol(protocol: Protocol):
