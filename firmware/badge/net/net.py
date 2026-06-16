@@ -98,9 +98,10 @@ class BadgeNet:
                 frame = await self.badge.lora.recv()
                 if frame is not None and len(frame) > 0:
                     # Run raw packet callbacks
+                    raw_accepted = False
                     for cb in self.raw_packet_callbacks:
                         try:
-                            cb(frame)
+                            raw_accepted = cb(frame)
                         except Exception as e:
                             print("Error in raw callback:", e)
 
@@ -113,7 +114,8 @@ class BadgeNet:
                         message = NetworkFrame().set_frame(frame).validate_frame()
                         # print(f"Received frame {repr(message)}")
                     except (ValueError, IndexError) as err:
-                        if not self.raw_packet_callbacks:
+                        # if raw listeners were ok with it, we don't need to notify failure here
+                        if not raw_accepted:
                             print(f"Failed validation {repr(frame)}: {err}")
                         continue
 
