@@ -37,6 +37,7 @@ class Page:
         self.infobar.add_style(styles.infobar_style, 0)
         self.infobar.set_width(lvgl.pct(100))
         self.infobar.set_height(INFOBAR_HEIGHT)
+        self.infobar.set_scrollbar_mode(0)
 
         self.infobar_left = lvgl.label(self.infobar)
         self.infobar_left.add_style(styles.infobar_style, 0)
