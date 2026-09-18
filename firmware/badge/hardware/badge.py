@@ -57,7 +57,14 @@ class Badge:
 
         # Setup Display and Input
         self.display: Display = Display()
-        self.display.backlight.duty(500)
+        brightness = self.get_int("brightness_10bit")
+        if brightness > 1023: # Avoid "softbrick" because of uncorrect brightness value
+            brightness = 1023
+            self.config.set("brightness_10bit", str(brightness))
+        if brightness < 1:
+            brightness = 1
+            self.config.set("brightness_10bit", str(brightness))
+        self.display.backlight.duty(brightness)
         self.keyboard: Keyboard = Keyboard()
 
         self.keyboard.register_meta_action("p", self.take_screenshot)
@@ -79,6 +86,7 @@ class Badge:
         self._setup_default_int("radio_coding_rate", b'5')
         self._setup_default_int("chat_ttl", b'3')
         self._setup_default_int("send_cooldown_ms", b'1')
+        self._setup_default_int("brightness_10bit", b'512')
 
     def _setup_default_config_value(self, key, default_value):
         if key not in self.config.db.keys():

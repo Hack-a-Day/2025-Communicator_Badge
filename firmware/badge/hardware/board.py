@@ -17,7 +17,7 @@ LCD_SDA = Pin(21)
 LCD_RST = Pin(40, Pin.OUT)
 LCD_CS = Pin(41, Pin.OUT)
 LCD_TE = Pin(42, Pin.OUT)
-LCD_BACKLIGHT = PWM(Pin(2, Pin.OUT))
+#LCD_BACKLIGHT = PWM(Pin(2)) # Already defined is in `lvgl_setup.py`
 LCD_DATA_CMD = Pin(39, Pin.OUT)
 
 # Radio SPI + Extras

@@ -56,7 +56,7 @@ def lcd_init():
         reset_pin=_LCD_RESET_PIN,
         reset_state=nv3007.STATE_LOW,
         backlight_pin=_LCD_BACKLIGHT_PIN,
-        backlight_on_state=nv3007.STATE_LOW,
+        backlight_on_state=nv3007.STATE_PWM,
         offset_x=_OFFSET_X,
         offset_y=_OFFSET_Y,
         color_space=lvgl.COLOR_FORMAT.RGB565,
@@ -65,6 +65,7 @@ def lcd_init():
 
     display.init()
     display.set_rotation(lvgl.DISPLAY_ROTATION._270) ## order important, after init!
+    display.set_backlight(50) # This function uses value in percent. display._backlight_pin.duty() uses value between 0-1023
         
     ## Start up screen tasks and return screen object
     lvgl.task_handler()
@@ -77,7 +78,7 @@ def lcd_init():
     th._timer.deinit()
     asyncio.create_task(lvgl_task_handler(th))
 
-    return lvgl.screen_active()
+    return display
 
 
 
