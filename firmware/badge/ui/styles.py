@@ -10,8 +10,9 @@ except:
     """
     Default style from the 2025 Supercon and 2026 Hackaday Europe
     
-    Copied here in case the 'themes' folder does not exists, the 'default' theme
-    is absent from that folder or something else becomes messed up
+    Copied here in case something goes wrong while importing the theme
+    (eg. the 'themes' folder does not exists, the 'default' theme
+    is absent from that folder, a setting is incorrect, ...)
     """
 
     # Colors

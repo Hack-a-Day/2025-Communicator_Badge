@@ -4,7 +4,12 @@ Default style from the 2025 Supercon and 2026 Hackaday Europe
 
 import lvgl
 
-# Colors
+
+
+""" Colors """
+
+# Keep these default color names in case some app import them directly
+
 lcd_color_bg      = lvgl.color_hex(0xabc5a0)
 lcd_color_fg      = lvgl.color_hex(0x292b29)
 lcd_color_fg_dark = lvgl.color_hex(0x080908)
@@ -14,6 +19,14 @@ hackaday_grey   = lvgl.color_hex(0x1a1a1a)
 hackaday_yellow = lvgl.color_hex(0xe39810) ## adjusted for screen gamma
 hackaday_white  = lvgl.color_hex(0xffffff)
 
+# Some colors
+lvg_color_black  	= lvgl.color_hex(0x000000)
+lvg_color_red   	= lvgl.color_hex(0x990000)
+lvg_color_green 	= lvgl.color_hex(0x006600)
+
+
+
+""" Styles for the UI elements """
 
 # Base style
 base_style = lvgl.style_t()
@@ -84,7 +97,4 @@ cursor_style.set_border_color(lcd_color_fg)
 
 
 
-# Some colors
-lvg_color_black  	= lvgl.color_hex(0x000000)
-lvg_color_red   	= lvgl.color_hex(0x990000)
-lvg_color_green 	= lvgl.color_hex(0x006600)
+
