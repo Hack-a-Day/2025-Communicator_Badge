@@ -1,10 +1,36 @@
 import lvgl
 
 
+theme = 'default'
+
+
 try:
-    from ui.themes.default import *
+    
+    # Programmatically load the module corresponding to the selected theme
+    # Inspired from https://stackoverflow.com/a/69619972, with modifications
+    # to take into account the fact that importlib does not exist in Micropython
+    
+    # (We cannot simply do "from module_str import *", with module_str a str 
+    # containing the name of the module/theme. That's why we do it this way.)
+    
+    # Import the module to a namespace
+    module_name = 'ui.themes.'+theme
+    module = __import__(module_name, globals(), locals(), [theme])
+    
+    # Extract the variable/settings from the module to a dict
+    module_dict = {}
+    for key, value in module.__dict__.items():
+        if not key.startswith('__'): # We do not want '__name__', ...
+            module_dict[key] = value
+    
+    # Add the variables extracted from the module namespace to the global namespace
+    # Note : they are global inside the current (=styles.py) module, not in
+    # the whole Python interpreter
+    globals().update(module_dict)
+            
+
 except:
-    print("Theme not found ... Loading default theme from 'styles.py' instead")
+    print("UI theme import failed ... Loading default theme from 'styles.py' instead")
     
     
     """
