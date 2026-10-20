@@ -1,10 +1,24 @@
 import lvgl
 
 
+from hardware.datafile import Config
+
+
 theme = 'default'
 
 
 try:
+    
+    # Retrieve the theme from the config
+    config = Config()
+    theme_config = config.get('theme')
+    config.close()
+    
+    # Update the name of the selected theme only if the "theme"
+    # key exists in the config file.
+    # Otherwise, we'll use the default value set at the beginning of the file
+    if theme_config is not None:
+        theme = theme_config.decode()
     
     # Programmatically load the module corresponding to the selected theme
     # Inspired from https://stackoverflow.com/a/69619972, with modifications

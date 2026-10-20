@@ -72,6 +72,7 @@ class Badge:
         self._setup_default_config_value("nametag", "Your Name Here!")
         self._setup_default_config_value("nametag_show_image", b'false')
         self._setup_default_config_value("nametag_image", b'images/headshots/wrencher.png')
+        self._setup_default_config_value("theme", "default")
         self._setup_default_int("radio_tx_power", b'9')
         self._setup_default_float("radio_frequency", b'869.525')
         self._setup_default_float("radio_bandwidth", b'250.0')
