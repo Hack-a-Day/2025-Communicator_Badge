@@ -15,17 +15,37 @@ class Page:
     Because of the way they are packed, they need to be called a top-down order and at least
     some kind of content (do we _need_ menubar?)"""
 
-    def __init__(self):
+    def __init__(self,
+                 base_style = styles.base_style,
+                 content_style = styles.content_style,
+                 menubar_style = styles.menubar_style,
+                 infobar_style = styles.infobar_style,
+                 button_style = styles.button_style,
+                 textbox_style = styles.textbox_style,
+                 cursor_style = styles.cursor_style,
+                 lcd_color_bg = styles.lcd_color_bg,
+                 lcd_color_fg = styles.lcd_color_fg):
+        
+        self.base_style = base_style
+        self.content_style = content_style
+        self.menubar_style = menubar_style
+        self.infobar_style = infobar_style
+        self.button_style = button_style
+        self.textbox_style = textbox_style
+        self.cursor_style = cursor_style
+        self.lcd_color_bg = lcd_color_bg
+        self.lcd_color_fg = lcd_color_fg
+        
         self.scr = lvgl.obj()
         self.scr.set_scrollbar_mode(0)
-        self.scr.add_style(styles.base_style, 0)
+        self.scr.add_style(self.base_style, 0)
 
         self.flex_container = lvgl.obj(self.scr)
         ## totally fill the screen with a flex-align box
         self.flex_container.set_width(lvgl.pct(100))
         self.flex_container.set_height(lvgl.pct(100))
         self.flex_container.set_scrollbar_mode(0)
-        self.flex_container.add_style(styles.base_style, 0)
+        self.flex_container.add_style(self.base_style, 0)
         self.flex_container.set_flex_flow(lvgl.FLEX_FLOW.COLUMN)
         self.flex_container.set_flex_align(
             lvgl.FLEX_ALIGN.START, lvgl.FLEX_ALIGN.START, lvgl.FLEX_ALIGN.START
@@ -34,32 +54,32 @@ class Page:
     def create_infobar(self, infobar_content):
         self.infobar = lvgl.obj(self.flex_container)
         self.infobar.align(lvgl.ALIGN.TOP_LEFT, 0, 5)
-        self.infobar.add_style(styles.infobar_style, 0)
+        self.infobar.add_style(self.infobar_style, 0)
         self.infobar.set_width(lvgl.pct(100))
         self.infobar.set_height(INFOBAR_HEIGHT)
 
         self.infobar_left = lvgl.label(self.infobar)
-        self.infobar_left.add_style(styles.infobar_style, 0)
+        self.infobar_left.add_style(self.infobar_style, 0)
         self.infobar_left.align(lvgl.ALIGN.TOP_LEFT, 10, 0)
         self.infobar_left.set_text(infobar_content[0])
 
         self.infobar_right = lvgl.label(self.infobar)
-        self.infobar_right.add_style(styles.infobar_style, 0)
+        self.infobar_right.add_style(self.infobar_style, 0)
         self.infobar_right.align(lvgl.ALIGN.TOP_RIGHT, -10, 0)
         self.infobar_right.set_text(infobar_content[1])
 
     def create_content(self):
         self.content = lvgl.obj(self.flex_container)
         self.content.set_scrollbar_mode(0)
-        self.content.add_style(styles.content_style, 0)
+        self.content.add_style(self.content_style, 0)
         self.content.set_width(SCREEN_WIDTH)
         self.content.set_flex_grow(1)
 
     def add_message_rows(self, message_count, left_width=80):
         left_pad = 5
         self.message_rows = lvgl.table(self.content)
-        self.message_rows.add_style(styles.content_style, 0)
-        self.message_rows.add_style(styles.content_style, lvgl.PART.ITEMS)
+        self.message_rows.add_style(self.content_style, 0)
+        self.message_rows.add_style(self.content_style, lvgl.PART.ITEMS)
 
         self.message_rows.set_style_pad_top(0, lvgl.PART.ITEMS)
         self.message_rows.set_style_pad_bottom(0, lvgl.PART.ITEMS)
@@ -99,16 +119,13 @@ class Page:
     def create_text_box(self, default_text="", one_line=False, char_limit=0):
 
         self.text_box = lvgl.textarea(self.content)
-        self.text_box.add_style(styles.infobar_style, 0)
+        self.text_box.add_style(self.textbox_style, 0)
         self.text_box.set_height(lvgl.pct(80))
         self.text_box.set_width(lvgl.pct(80))
         self.text_box.align(lvgl.ALIGN.CENTER, 0, 0)
-        self.text_box.set_style_border_width(2, 0)
-        self.text_box.set_style_pad_all(5, 0)
         self.text_box.set_text(default_text)
         self.text_box.set_one_line(one_line)
-        cursor_style = lvgl.style_t()
-        self.text_box.set_style_border_color(styles.lcd_color_fg, lvgl.PART.CURSOR | lvgl.STATE.FOCUSED)
+        self.text_box.add_style(self.cursor_style, lvgl.PART.CURSOR | lvgl.STATE.FOCUSED)
         self.text_box.add_state(lvgl.STATE.FOCUSED)
 
         self.tb_char_limit = char_limit
@@ -144,10 +161,10 @@ class Page:
         self.menubar = lvgl.obj(self.flex_container)
         self.menubar.set_width(lvgl.pct(100))
         self.menubar.set_height(MENU_HEIGHT)
-        self.menubar.add_style(styles.menubar_style, 0)
+        self.menubar.add_style(self.menubar_style, 0)
         self.menubar_buttons = [lvgl.button(self.menubar) for x in range(5)]
         for i in range(5):
-            self.menubar_buttons[i].add_style(styles.menubar_style, 0)
+            self.menubar_buttons[i].add_style(self.button_style, 0)
             self.menubar_buttons[i].set_style_text_align(lvgl.ALIGN.CENTER, 0)
             btn_label = lvgl.label(self.menubar_buttons[i])
             btn_label.set_text(menubar_labels[i])
@@ -190,3 +207,4 @@ class Page:
 
     def delete(self):
         self.scr.delete()
+
